@@ -1,0 +1,40 @@
+.modal-backdrop.show {
+  opacity: 0;
+}
+
+.page-title {
+  color: #000;
+}
+
+.branding {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.page-title {
+  color: #4eab39;
+  padding: 0px;
+  position: relative;
+  font-size: 24px;
+}
+
+@media (min-width:767px) {
+  .navmenu {
+    display: none;
+  }
+}
+
+@media (max-width:767px) {
+  .navmenu {
+    display: block;
+  }
+
+  .left-sidebar {
+    max-width: 100px !important;
+  }
+
+  .right-content {
+    width: calc(100% - 100px);
+  }
+}

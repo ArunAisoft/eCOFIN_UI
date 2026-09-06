@@ -1,0 +1,254 @@
+<div class="p-3">
+  <form [formGroup]="employeeForm" novalidate>
+    <!-- ══ SECTION 1: Employee Details ══ -->
+    <div class="bglightgreen p-3 mb-3">
+      <div class="flex-grow-1">
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+          <div>
+            <h6 class="fw-semibold mb-0">Employee Details</h6>
+          </div>
+        </div>
+      </div>
+      <div class="row mb-3">
+        <div class="col-md-3">
+          <label class="form-label">Code <span class="text-danger">*</span></label>
+          <input class="form-control" formControlName="employeeCode" placeholder="Employee A/C" [ngClass]="{'is-invalid': isInvalid('employeeCode')}" />
+          <div class="invalid-feedback d-block" *ngIf="hasError('employeeCode','required')">Code is required.</div>
+          <div class="invalid-feedback d-block" *ngIf="hasError('employeeCode','maxlength')">Max 10 characters.</div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Employee Name <span class="text-danger">*</span></label>
+          <input class="form-control" formControlName="employeeName" placeholder="Employee Name" [ngClass]="{'is-invalid': isInvalid('employeeName')}" />
+          <div class="invalid-feedback d-block" *ngIf="hasError('employeeName','required')">Employee Name is required.</div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Employee Type</label>
+          <select class="form-select" formControlName="employeeType">
+            <option value="">Select Employee Type</option>
+            <option *ngFor="let t of employeeTypeOptions" [value]="t.value">{{ t.label }}</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Bank Account No.</label>
+          <input class="form-control" formControlName="bankAccount" placeholder="Bank Account No." />
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-3">
+          <label class="form-label">Contact Person</label>
+          <input class="form-control" formControlName="reportTo" placeholder="Contact Person" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Employee Status <span class="text-danger">*</span></label>
+          <select class="form-select" formControlName="objectStatus" [ngClass]="{'is-invalid': isInvalid('objectStatus')}">
+            <option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</option>
+          </select>
+          <div class="invalid-feedback d-block" *ngIf="hasError('objectStatus','required')">Status is required.</div>
+        </div>
+      </div>
+    </div>
+    <div class="bglightgreen p-3 mb-3">
+      <div class="flex-grow-1">
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+          <div>
+            <h6 class="fw-semibold mb-0">Address Details</h6>
+          </div>
+        </div>
+      </div>
+      <div class="row mb-3">
+        <div class="col-md-3">
+          <label class="form-label">Address Line 1</label>
+          <input class="form-control" formControlName="addrLine1" placeholder="Address Line 1" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Address Line 2</label>
+          <input class="form-control" formControlName="addrLine2" placeholder="Address Line 2" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Address Line 3</label>
+          <input class="form-control" formControlName="addrLine3" placeholder="Address Line 3" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Address Line 4</label>
+          <input class="form-control" formControlName="addrLine4" placeholder="Address Line 4" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-3">
+          <label class="form-label">City</label>
+          <input class="form-control" formControlName="addrCity" placeholder="City" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">PIN Code</label>
+          <input class="form-control" formControlName="addrPin" placeholder="PIN" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">State</label>
+          <input class="form-control" formControlName="addrState" placeholder="State" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Country</label>
+          <input class="form-control" formControlName="addrCountry" placeholder="Country" />
+        </div>
+      </div>
+    </div>
+    <div class="bglightgreen p-3 mb-3">
+      <div class="flex-grow-1">
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+          <div>
+            <h6 class="fw-semibold mb-0">Communication Details</h6>
+          </div>
+        </div>
+      </div>
+      <div class="row mb-3">
+        <div class="col-md-3">
+          <label class="form-label">Telephone</label>
+          <input class="form-control" formControlName="commTelephone1" placeholder="Telephone" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Mobile</label>
+          <input class="form-control" formControlName="commTelephone2" placeholder="Mobile" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Fax No</label>
+          <input class="form-control" formControlName="commFaxno" placeholder="Fax No" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Email</label>
+          <input class="form-control" formControlName="commEmail" placeholder="Email" [ngClass]="{'is-invalid': isInvalid('commEmail')}" />
+          <div class="invalid-feedback d-block" *ngIf="hasError('commEmail','email')">Invalid email address.</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-3">
+          <label class="form-label">Telex No</label>
+          <input class="form-control" formControlName="commTelexno" placeholder="Telex No" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Grams</label>
+          <input class="form-control" formControlName="commGrams" placeholder="Grams" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Contact Person</label>
+          <input class="form-control" formControlName="commContactperson" placeholder="Contact Person" />
+        </div>
+        <div class="col-md-3 mt-4 d-flex justify-content-end gap-2">
+          <button tabIndex="0" type="button" class="btn btn-primary me-2" style="width: 80px;" (click)="onClear()" (keydown.enter)="onClear()"> New </button>
+          <button tabIndex="0" type="button" class="btn btn-success" style="width: 80px;" (click)="onSave()" (keydown.enter)="onSave()"> {{ isEditMode ? 'Update' : 'Save' }} </button>
+          <button *ngIf="isEditMode" type="button" class="btn btn-primary" (click)="openSegmentPopup(editingCode)" (keydown.enter)="openSegmentPopup(editingCode)">Segment Link </button>
+        </div>
+      </div>
+    </div>
+  </form>
+  <div class="row align-items-center mb-2">
+    <div class="col-md-9">
+      <span class="text-muted small">Showing {{ filteredEmployeeList.length }} of {{ employeeList.length }} employees</span>
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+      <input type="text" class="form-control" [(ngModel)]="searchText" placeholder="Search..." />
+      <button class="btn btn-primary" (click)="searchText = ''">Clear</button>
+    </div>
+  </div>
+  <div class="table-responsive mb-3" style="height:46vh; max-height:46vh; overflow:auto;">
+    <table class="table table-borderless mb-0">
+      <thead class="table-light sticky-header">
+        <tr>
+          <th style="text-align:left; width:6%;">Code</th>
+          <th style="text-align:left; width:18%;">Employee Name</th>
+          <th style="text-align:left; width:8%;">Type</th>
+          <th style="text-align:left; width:10%;">Bank Account</th>
+          <th style="text-align:left; width:10%;">Telephone</th>
+          <th style="text-align:left; width:10%;">Email</th>
+          <th style="text-align:left; width:16%;">Address</th>
+          <th style="text-align:left; width:8%;">City</th>
+          <th style="text-align:left; width:8%;">State</th>
+          <th style="text-align:left; width:6%;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of filteredEmployeeList" [class.table-warning]="isEditMode && row.employeeCode === editingCode">
+          <td style="text-align:left; cursor:pointer;">
+            <a href="#" title="Click here to Edit" (click)="startEdit(row); $event.preventDefault()">{{ row.employeeCode }}</a>
+          </td>
+          <td style="text-align:left; cursor:pointer;">
+            <a href="#" title="Click here to open Segment Link" (click)="openSegmentPopup(row.employeeCode); $event.preventDefault()">{{ row.employeeName }}</a>
+          </td>
+          <td class="align-middle text-start;">{{ employeeTypeLabel(row.employeeType) }}</td>
+          <td class="align-middle text-start;">{{ row.bankAccount }}</td>
+          <td class="align-middle text-start;">{{ row.commTelephone1 }}</td>
+          <td class="align-middle text-start;">{{ row.commEmail }}</td>
+          <td class="align-middle text-start;">{{ row.addrLine1 }} {{ row.addrLine2 }}</td>
+          <td class="align-middle text-start;">{{ row.addrCity }}</td>
+          <td class="align-middle text-start;">{{ row.addrState }}</td>
+          <td class="align-middle text-start;">{{ statusLabel(row.objectStatus) }}</td>
+        </tr>
+        <tr *ngIf="filteredEmployeeList.length === 0">
+          <td colspan="10" class="text-center text-muted py-3"> {{ employeeList.length === 0 ? 'No employees found.' : 'No results match your search.' }} </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showSegmentPopup" (click)="closeSegmentPopup()"></div>
+<div class="modal fade show d-block" tabindex="-1" role="dialog" *ngIf="showSegmentPopup">
+  <div class="modal-dialog modal-md modal-dialog-centered modal-dialog-scrollable" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title fs-5"> Segment Link &nbsp;—&nbsp; {{ editingCode }} </h6>
+        <button type="button" class="btn-close" (click)="closeSegmentPopup()"></button>
+      </div>
+      <div class="modal-body p-3">
+        <div *ngIf="isLoading" class="text-center py-3">
+          <span class="spinner-border spinner-border-sm text-primary me-2"></span> Loading segment links...
+        </div>
+        <form [formGroup]="segmentForm" novalidate *ngIf="!isLoading">
+          <div class="table-responsive">
+            <table class="table table-borderless mb-0">
+              <thead class="table-light sticky-header">
+                <tr>
+                  <th style="text-align:left; width:65%;">Account Code <span class="text-danger">*</span></th>
+                  <th style="text-align:left; width:25%;">Status</th>
+                  <th style="text-align:left; width:10%;"></th>
+                </tr>
+              </thead>
+              <tbody formArrayName="rows">
+                <tr *ngFor="let row of segmentRows.controls; let i = index" [formGroupName]="i">
+                  <td style="vertical-align:middle;">
+                    <select class="form-select form-select-sm" formControlName="accountCode" [ngClass]="{'is-invalid': isSegRowInvalid(row, 'accountCode')}">
+                      <option value="">Select Account</option>
+                      <option *ngFor="let acc of empAccounts" [value]="acc.accountCode"> {{ acc.accountCode }} — {{ acc.description }} </option>
+                    </select>
+                    <div class="invalid-feedback d-block" *ngIf="isSegRowInvalid(row, 'accountCode')">Account Code is required.</div>
+                  </td>
+                  <td style="vertical-align:middle;">
+                    <select class="form-select form-select-sm" formControlName="employeeStatus">
+                      <option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</option>
+                    </select>
+                  </td>
+                  <td style="vertical-align:middle; text-align:center;">
+                    <i class="fa fa-times-circle fs-5 text-danger" style="cursor:pointer;" title="Remove row" (click)="removeSegmentRow(i)"></i>
+                  </td>
+                </tr>
+                <tr *ngIf="segmentRows.controls.length === 0">
+                  <td colspan="3" class="text-center text-muted py-2"> No rows. Click <strong>Add Row</strong> to begin. </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer d-flex justify-content-between">
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-primary" style="min-width:80px;" [disabled]="isSegSaving" (click)="saveSegment()">
+            <span *ngIf="isSegSaving" class="spinner-border spinner-border-sm me-1"></span> Save </button>
+          <button type="button" class="btn btn-primary" style="min-width:80px;" (click)="closeSegmentPopup()">Cancel</button>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" (click)="addSegmentRow()">
+          <i class="fa fa-plus me-1"></i> Add Row </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div *ngIf="isLoading" class="spinner-overlay">
+  <div class="spinner"></div>
+</div>

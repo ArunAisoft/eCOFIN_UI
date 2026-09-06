@@ -1,0 +1,241 @@
+<!--
+  Define Prefix.
+
+  Mode drives the columns, as in the legacy screen:
+    Purchase (vchr_type='P')  Product Levytype  | Product Prefix | Account | Description | DBCR
+    Sales    (vchr_type='I')  Customer/Levytype | Customer Code  | Customer Name | Account | Description | DBCR
+
+  Customer Name exists only in Sales mode, because only the vchr_type='I'
+  query joins cfn_customer. In Purchase mode prod_prefix holds product and
+  levy codes (ed, EDCess_Modvat, 8100 ...) with no cfn_customer row.
+
+  The customer datalist attaches ONLY to Sales customer rows. Attaching it to
+  Purchase rows is what made product entry offer a customer list.
+
+  Lookup lists render once per page, not once per row. Nesting them inside
+  the row *ngFor created rows x (customers + accounts) option nodes.
+-->
+
+<datalist id="dl_customers" *ngIf="isSalesMode && customerList.length">
+    <option *ngFor="let c of customerList; trackBy: trackByCode"
+            [value]="c.customerCode">{{ c.customerName }}</option>
+</datalist>
+
+<datalist id="dl_accounts" *ngIf="accountList.length">
+    <option *ngFor="let a of accountList; trackBy: trackByCode"
+            [value]="a.accountCode">{{ a.description }}</option>
+</datalist>
+
+<div class="p-3">
+    <form [formGroup]="prefixForm" novalidate>
+
+        <!-- Toolbar: mirrors the legacy On Hold / Post / Cancel + Add -->
+        <div class="bglightgreen p-3 mb-3">
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3 flex-wrap gap-2">
+                <h6 class="fw-semibold mb-0">Define Prefix</h6>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="badge"
+                          [ngClass]="isAddMode ? 'bg-warning text-dark' : 'bg-secondary-subtle text-secondary'">
+                        Mode: {{ modeBadge }}
+                    </span>
+                    <span class="text-muted small" *ngIf="addContext">
+                        {{ addContext.levelLabel }}
+                    </span>
+                    <span class="text-muted small">{{ currentModeLabel }}</span>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 flex-wrap mb-3">
+                <button type="button" class="btn btn-primary btn-sm"
+                        [disabled]="isSaving || (addContext && !addContext.canAdd)"
+                        (click)="onAdd()">
+                    <i class="fa fa-plus me-1"></i>Add
+                </button>
+
+                <button type="button" class="btn btn-success btn-sm"
+                        [disabled]="!isAddMode || isSaving || (addContext && !addContext.canPost)"
+                        (click)="onPost()">
+                    <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-1"></span>Post
+                </button>
+
+                <button type="button" class="btn btn-outline-secondary btn-sm"
+                        [disabled]="!isAddMode || isSaving"
+                        (click)="onCancel()">Cancel</button>
+
+                <button type="button" class="btn btn-outline-primary btn-sm ms-auto"
+                        (click)="onRefresh()">Refresh</button>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label d-block fw-semibold">Voucher Type</label>
+                    <div class="d-flex gap-3 pt-1">
+                        <div class="form-check form-check-inline" *ngFor="let v of vchrTypeOptions">
+                            <input class="form-check-input" type="radio" formControlName="vchrType"
+                                   [value]="v.value" [id]="'vchr_' + v.value" />
+                            <label class="form-check-label" [for]="'vchr_' + v.value">{{ v.label }}</label>
+                        </div>
+                    </div>
+                </div>
+                <!-- Purchase = Domestic/Import, Sales = Domestic/Export -->
+                <div class="col-md-6">
+                    <label class="form-label d-block fw-semibold">Prefix Type</label>
+                    <div class="d-flex gap-3 pt-1">
+                        <div class="form-check form-check-inline" *ngFor="let p of prefixTypeOptions">
+                            <input class="form-check-input" type="radio" formControlName="prefixType"
+                                   [value]="p.value" [id]="'ptype_' + p.value" />
+                            <label class="form-check-label" [for]="'ptype_' + p.value">{{ p.label }}</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADD mode banner: the grid holds only the rows about to be written -->
+        <div *ngIf="isAddMode" class="alert alert-warning py-2 px-3 mb-2 d-flex justify-content-between align-items-center">
+            <span>
+                <strong>Add mode.</strong>
+                Only the {{ rows.length }} row(s) below will be written.
+                Existing rows for {{ currentModeLabel }} are not affected.
+            </span>
+            <button type="button" class="btn btn-outline-dark btn-sm" (click)="addRow()">
+                <i class="fa fa-plus me-1"></i>Another row
+            </button>
+        </div>
+
+        <!-- Search: browse mode only -->
+        <div class="row align-items-center mb-2" *ngIf="!isAddMode">
+            <div class="col-md-5">
+                <span class="text-muted small">
+                    Showing {{ rangeStart }}&ndash;{{ rangeEnd }} of {{ totalCount }} rows
+                </span>
+            </div>
+            <div class="col-md-7 d-flex justify-content-end gap-2 flex-wrap">
+                <input type="text" class="form-control form-control-sm" style="max-width: 240px;"
+                       [value]="searchText"
+                       (input)="onSearchInput($any($event.target).value)"
+                       placeholder="Search prefix, account, description, name..." />
+                <button type="button" class="btn btn-outline-secondary btn-sm" (click)="clearSearch()">Clear</button>
+                <button type="button" class="btn btn-outline-primary btn-sm" (click)="addRow()">
+                    <i class="fa fa-plus me-1"></i>Add Row
+                </button>
+            </div>
+        </div>
+
+        <!-- Grid -->
+        <div #gridScroll class="table-responsive mb-2" style="height:58vh; max-height:58vh; overflow:auto;">
+            <table class="table table-borderless mb-0">
+                <thead class="table-light sticky-header">
+                    <tr>
+                        <th style="text-align:left; width:13%;">{{ levyColumnLabel }} <span class="text-danger">*</span></th>
+                        <th style="text-align:left; width:17%;">{{ prefixColumnLabel }} <span class="text-danger">*</span></th>
+                        <th *ngIf="isSalesMode" style="text-align:left; width:20%;">Customer Name</th>
+                        <th style="text-align:left; width:15%;">Account Code <span class="text-danger">*</span></th>
+                        <th style="text-align:left;">Description</th>
+                        <th style="text-align:left; width:10%;">DBCR Flag <span class="text-danger">*</span></th>
+                        <th style="text-align:center; width:5%;"></th>
+                    </tr>
+                </thead>
+                <tbody formArrayName="rows">
+                    <tr *ngFor="let row of rows.controls; let i = index; trackBy: trackByRow"
+                        [formGroupName]="i"
+                        [ngClass]="{ 'table-warning': isNewRow(row) && isAddMode }">
+
+                        <!-- 'P' reads Product in Purchase mode, Customer in Sales mode -->
+                        <td style="vertical-align:middle;">
+                            <select class="form-select form-select-sm" formControlName="prodLevyType"
+                                    (change)="onLevyTypeChange(i)"
+                                    [ngClass]="{'is-invalid': isRowInvalid(row, 'prodLevyType')}">
+                                <option value="">Select</option>
+                                <option *ngFor="let l of levyTypeOptions" [value]="l.value">{{ l.label }}</option>
+                            </select>
+                        </td>
+
+                        <!-- Free text, as in the legacy screen. Customer list only
+                             attaches for Sales customer rows. -->
+                        <td style="vertical-align:middle;">
+                            <input class="form-control form-control-sm"
+                                   [id]="'prefix_' + i"
+                                   formControlName="prodPrefix"
+                                   [attr.list]="isCustomerRow(row) ? 'dl_customers' : null"
+                                   autocomplete="off"
+                                   [placeholder]="isCustomerRow(row) ? 'Customer code'
+                                                 : (isLevyRow(row) ? 'Levy code' : 'Product code')"
+                                   (change)="onPrefixChange(i)"
+                                   [ngClass]="{'is-invalid': isRowInvalid(row, 'prodPrefix')}" />
+                        </td>
+
+                        <td *ngIf="isSalesMode" style="vertical-align:middle;">
+                            <input class="form-control form-control-sm" formControlName="customerName" readonly
+                                   [attr.disabled]="isLevyRow(row) ? true : null" />
+                        </td>
+
+                        <td style="vertical-align:middle;">
+                            <input class="form-control form-control-sm"
+                                   formControlName="accountCode"
+                                   list="dl_accounts"
+                                   autocomplete="off"
+                                   placeholder="Account code"
+                                   (change)="onAccountChange(i)"
+                                   [ngClass]="{'is-invalid': isRowInvalid(row, 'accountCode')}" />
+                        </td>
+
+                        <td style="vertical-align:middle;">
+                            <input class="form-control form-control-sm" formControlName="description" readonly />
+                        </td>
+
+                        <td style="vertical-align:middle;">
+                            <select class="form-select form-select-sm" formControlName="dbcrFlag">
+                                <option *ngFor="let d of dbcrOptions" [value]="d.value">{{ d.label }}</option>
+                            </select>
+                        </td>
+
+                        <td style="vertical-align:middle; text-align:center;">
+                            <i class="fa fa-times-circle fs-5 text-danger" style="cursor:pointer;"
+                               title="Remove row" (click)="removeRow(i)"></i>
+                        </td>
+                    </tr>
+
+                    <tr *ngIf="!isLoading && !isAddMode && rows.length === 0 && !searchText">
+                        <td [attr.colspan]="isSalesMode ? 7 : 6" class="text-center text-muted py-3">
+                            No rows for {{ currentModeLabel }}. Click <strong>Add</strong> to begin.
+                        </td>
+                    </tr>
+                    <tr *ngIf="!isLoading && !isAddMode && rows.length === 0 && searchText">
+                        <td [attr.colspan]="isSalesMode ? 7 : 6" class="text-center text-muted py-3">
+                            No rows match your search.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pager: browse mode only -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2" *ngIf="!isAddMode">
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-muted small">Rows per page</span>
+                <select class="form-select form-select-sm" style="width:90px;"
+                        [value]="pageSize"
+                        (change)="onPageSizeChange($any($event.target).value)">
+                    <option *ngFor="let s of pageSizeOptions" [value]="s">{{ s }}</option>
+                </select>
+            </div>
+
+            <div class="btn-group" role="group" *ngIf="totalPages > 1">
+                <button type="button" class="btn btn-outline-primary btn-sm"
+                        [disabled]="page <= 1" (click)="goToPage(1)">&laquo; First</button>
+                <button type="button" class="btn btn-outline-primary btn-sm"
+                        [disabled]="page <= 1" (click)="goToPage(page - 1)">Prev</button>
+                <span class="btn btn-sm disabled">Page {{ page }} of {{ totalPages }}</span>
+                <button type="button" class="btn btn-outline-primary btn-sm"
+                        [disabled]="page >= totalPages" (click)="goToPage(page + 1)">Next</button>
+                <button type="button" class="btn btn-outline-primary btn-sm"
+                        [disabled]="page >= totalPages" (click)="goToPage(totalPages)">Last &raquo;</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div *ngIf="isLoading" class="spinner-overlay">
+    <div class="spinner"></div>
+</div>

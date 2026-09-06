@@ -1,0 +1,427 @@
+<div class="mt-3">
+    <!-- ── Filter bar ──────────────────────────────────────────────────── -->
+    <div class="bglightgreen p-3 mb-3">
+        <div class="row align-items-end g-2">
+            <div class="col-md-4 col-sm-6">
+                <label class="form-label mb-1" style="font-size:11px;font-weight:600;color:#5a8a5a;">Bank</label>
+                <select class="form-select form-select-sm" [formControl]="bankCodeControl" (change)="onFilterChange()">
+                    <option [value]="null">All banks</option>
+                    <option *ngFor="let b of bankSummary" [value]="b.bankCode">{{ b.bankCode }} — {{ b.bankName }}</option>
+                </select>
+            </div>
+            <div class="col-md-2 col-sm-6">
+                <label class="form-label mb-1" style="font-size:11px;font-weight:600;color:#5a8a5a;">Financial year</label>
+                <select class="form-select form-select-sm" [formControl]="finYearControl" (change)="onFinYearChange()">
+                    <option [value]="null">All years</option>
+                    <option *ngFor="let fy of financialYears" [value]="fy">FY {{ fy }}</option>
+                </select>
+            </div>
+            <!-- Periods narrow to the selected year. Period is more specific and
+                 wins server-side, so onFinYearChange() clears it when the year moves. -->
+            <div class="col-md-2 col-sm-6">
+                <label class="form-label mb-1" style="font-size:11px;font-weight:600;color:#5a8a5a;">Period</label>
+                <select class="form-select form-select-sm" [formControl]="accPeriodControl" (change)="onFilterChange()">
+                    <option [value]="null">{{ finYearControl.value ? 'All months in year' : 'All periods' }}</option>
+                    <option *ngFor="let m of periodsForSelectedYear" [value]="m.accPeriod">{{ m.accPeriod }}</option>
+                </select>
+            </div>
+            <div class="col-md-3 col-sm-6 d-flex gap-2">
+                <button class="btn btn-sm btn-outline-secondary flex-fill" (click)="onResetFilters()">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i>Reset </button>
+                <button class="btn btn-sm btn-success flex-fill" (click)="loadSummary()">
+                    <i class="bi bi-arrow-repeat me-1"></i>Refresh </button>
+            </div>
+        </div>
+    </div>
+    <ng-container *ngIf="!isLoading && kpi">
+        <!-- ── KPI cards ──────────────────────────────────────────────────── -->
+        <div class="row g-3 mb-3">
+            <div class="col-6 col-sm-4 col-md">
+                <div class="card h-100 border-0 bglightgreen">
+                    <div class="card-body p-3">
+                        <div class="text-muted mb-1" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;">
+                            <i class="bi bi-receipt me-1" style="font-size:20px;color:#4CAF50;"></i>Total Vouchers
+                        </div>
+                        <div class="fw-bold mb-1" style="font-size:22px;color:#1C3D22;line-height:1;">{{ kpi.totalVouchers | number }}</div>
+                        <div class="text-success" style="font-size:11px;">{{ kpi.postedCount | number }} posted</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-sm-4 col-md">
+                <div class="card h-100 border-0 bglightgreen">
+                    <div class="card-body p-3">
+                        <div class="text-muted mb-1" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;">
+                            <i class="bi bi-cash-stack me-1" style="font-size:20px;color:#4CAF50;"></i>Posted Amount
+                        </div>
+                        <div class="fw-bold mb-1" style="font-size:22px;color:#1C3D22;line-height:1;"><span [title]="fmtAmount(kpi.totalPostedAmount)">{{ fmtAmountShort(kpi.totalPostedAmount) }}</span></div>
+                        <div class="text-muted" style="font-size:11px;">Current period</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-sm-4 col-md">
+                <div class="card h-100 border-0 bglightgreen">
+                    <div class="card-body p-3">
+                        <div class="text-muted mb-1" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;">
+                            <i class="bi bi-pause-circle me-1" style="font-size:20px;color:#4CAF50;"></i>On Hold
+                        </div>
+                        <div class="fw-bold mb-1 text-warning" style="font-size:22px;line-height:1;"><span [title]="fmtAmount(kpi.totalOnHoldAmount)">{{ fmtAmountShort(kpi.totalOnHoldAmount) }}</span></div>
+                        <div class="text-danger" style="font-size:11px;">{{ kpi.onHoldCount | number }} vouchers</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-sm-4 col-md">
+                <div class="card h-100 border-0 bglightgreen">
+                    <div class="card-body p-3">
+                        <div class="text-muted mb-1" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;">
+                            <i class="bi bi-bank me-1" style="font-size:20px;color:#4CAF50;"></i>Banks / Accounts
+                        </div>
+                        <div class="fw-bold mb-1" style="font-size:22px;color:#1C3D22;line-height:1;">{{ kpi.totalBanks }} / {{ kpi.totalAccounts }}</div>
+                        <div class="text-muted" style="font-size:11px;">All active</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-sm-4 col-md">
+                <div class="card h-100 border-0 bglightgreen">
+                    <div class="card-body p-3">
+                        <div class="text-muted mb-1" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;">
+                            <i class="bi bi-people me-1" style="font-size:20px;color:#4CAF50;"></i>Vendors / Customers
+                        </div>
+                        <div class="fw-bold mb-1" style="font-size:22px;color:#1C3D22;line-height:1;">{{ kpi.totalVendors | number }} / {{ kpi.totalCustomers | number }}</div>
+                        <div class="text-muted" style="font-size:11px;">Active links</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ── Voucher type tabs ──────────────────────────────────────────── -->
+        <div class="d-flex flex-wrap gap-2 mb-3 pb-2 border-bottom">
+            <button class="btn btn-sm" style="border-radius:20px;font-size:11px;font-weight:500;" [ngStyle]="!selectedVoucherType
+          ? { background:'#534AB7', color:'#fff', borderColor:'transparent' }
+          : { background:'#f4f3ff', color:'#534AB7', borderColor:'#534AB744' }" (click)="closeDrillDown()"> All types <span class="badge ms-1" style="font-size:9px;border-radius:10px;" [ngStyle]="!selectedVoucherType
+            ? { background:'rgba(255,255,255,.25)', color:'#fff' }
+            : { background:'#534AB720', color:'#534AB7' }"> {{ voucherMetrics.length }} </span>
+            </button>
+            <button *ngFor="let cfg of voucherTypeConfig; trackBy: trackByCfgCode" class="btn btn-sm" style="border-radius:20px;font-size:11px;font-weight:500;" [ngStyle]="selectedVoucherType?.code === cfg.code
+          ? { background: cfg.color, color:'#fff', borderColor:'transparent' }
+          : { background: cfg.bgColor, color: cfg.color, borderColor: cfg.color + '55' }" (click)="selectVoucherType(cfg)"> {{ cfg.label }} <span class="badge ms-1" style="font-size:9px;border-radius:10px;" [ngStyle]="{ background: selectedVoucherType?.code === cfg.code ? 'rgba(255,255,255,.25)' : cfg.color + '20',
+                       color:      selectedVoucherType?.code === cfg.code ? '#fff' : cfg.color }"> {{ cfg.code }} </span>
+            </button>
+        </div>
+        <!-- ── Drill-down panel ───────────────────────────────────────────── -->
+        <div *ngIf="selectedVoucherType" class="card mb-3" [ngStyle]="{ borderLeft: '4px solid ' + selectedVoucherType.color }">
+            <div *ngIf="isDrillLoading" class="card-body text-center py-4">
+                <div class="spinner-border spinner-border-sm" [ngStyle]="{ color: selectedVoucherType.color }"></div>
+                <span class="ms-2 text-muted" style="font-size:12px;">Loading drill-down…</span>
+            </div>
+            <ng-container *ngIf="!isDrillLoading && drillData">
+                <div class="card-body">
+                    <div class="d-flex align-items-start justify-content-between mb-3">
+                        <div>
+                            <h6 class="mb-1 fw-semibold" style="font-size:14px;">
+                                <span class="badge me-2" [ngStyle]="{ background: selectedVoucherType.bgColor, color: selectedVoucherType.color }"> {{ selectedVoucherType.code }} </span>{{ drillData.description }}
+                            </h6>
+                            <small class="text-muted" style="font-size:11px;"> Group: {{ drillData.voucherGroup }} &nbsp;·&nbsp; {{ selectedVoucherType.label }} </small>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary" style="font-size:11px;" (click)="closeDrillDown()">
+                            <i class="bi bi-x-lg"></i> Close </button>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6 col-md-3">
+                            <div class="p-2 rounded bglightgreen text-center">
+                                <div class="text-muted" style="font-size:10px;">Total</div>
+                                <div class="fw-semibold" style="font-size:15px;">{{ drillData.kpi.totalVouchers | number }}</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-2 rounded bglightgreen text-center">
+                                <div class="text-muted" style="font-size:10px;">Posted amt</div>
+                                <div class="fw-semibold text-success" style="font-size:15px;">{{ fmtAmount(drillData.kpi.totalPostedAmount) }}</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-2 rounded bglightgreen text-center">
+                                <div class="text-muted" style="font-size:10px;">Posted</div>
+                                <div class="fw-semibold text-success" style="font-size:15px;">{{ drillData.statusBreakdown.postedCount | number }}</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-2 rounded bglightgreen text-center">
+                                <div class="text-muted" style="font-size:10px;">Hold / Draft</div>
+                                <div class="fw-semibold text-warning" style="font-size:15px;"> {{ drillData.statusBreakdown.onHoldCount }} / {{ drillData.statusBreakdown.draftCount }} </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex gap-3 mb-1" style="font-size:10px;color:#888;">
+                            <span><span class="badge bg-success me-1">&nbsp;</span>Posted {{ drillData.statusBreakdown.postedPct }}%</span>
+                            <span><span class="badge bg-warning me-1">&nbsp;</span>On Hold {{ drillData.statusBreakdown.onHoldPct }}%</span>
+                            <span><span class="badge bg-secondary me-1">&nbsp;</span>Draft {{ drillData.statusBreakdown.draftPct }}%</span>
+                        </div>
+                        <div class="progress" style="height:5px;border-radius:4px;">
+                            <div class="progress-bar bg-success" [style.width.%]="drillData.statusBreakdown.postedPct"></div>
+                            <div class="progress-bar bg-warning" [style.width.%]="drillData.statusBreakdown.onHoldPct"></div>
+                            <div class="progress-bar bg-secondary" [style.width.%]="drillData.statusBreakdown.draftPct"></div>
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <p class="mb-2" style="font-size:11px;font-weight:600;color:#5a8a5a;">Linked bank accounts</p>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover mb-0" style="font-size:11px;">
+                                    <thead style="background:#e8f5e8;">
+                                        <tr>
+                                            <th style="font-size:10px;color:#5a8a5a;font-weight:600;">Bank</th>
+                                            <th style="font-size:10px;color:#5a8a5a;font-weight:600;">Account</th>
+                                            <th style="font-size:10px;color:#5a8a5a;font-weight:600;">Type</th>
+                                            <th style="font-size:10px;color:#5a8a5a;font-weight:600;" class="text-end">Balance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr *ngFor="let a of drillData.linkedAccounts">
+                                            <td><span class="badge bg-info-subtle text-info border border-info-subtle">{{ a.bankCode }}</span></td>
+                                            <td>
+                                                <span class="d-block" style="font-family:monospace;font-size:10px;color:#888;">{{ a.accountCode }}</span>
+                                                <span>{{ a.accountName }}</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge" [ngStyle]="{ background: selectedVoucherType.bgColor, color: selectedVoucherType.color }">{{ a.accountType }}</span>
+                                            </td>
+                                            <td class="text-end fw-semibold">{{ fmtAmount(a.balance) }}</td>
+                                        </tr>
+                                        <tr *ngIf="!drillData.linkedAccounts.length">
+                                            <td colspan="4" class="text-center text-muted py-2" style="font-size:11px;">No linked accounts</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-2" style="font-size:11px;font-weight:600;color:#5a8a5a;">Monthly volume</p>
+                            <div style="position:relative;height:160px;">
+                                <canvas #drillChartRef></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </ng-container>
+        </div>
+        <!-- ── Charts row 1 ──────────────────────────────────────────────── -->
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <div class="card h-100 border-0 bglightgreen">
+                    <div class="card-body">
+                        <h6 class="card-title" style="font-size:13px;font-weight:600;color:#1C3D22;">Volume by voucher type</h6>
+                        <p class="card-subtitle text-muted mb-3" style="font-size:10px;">All types · click a bar to drill down</p>
+                        <div style="position:relative;height:240px;"><canvas #barChartRef></canvas></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100 border-0 bglightgreen">
+                    <div class="card-body">
+                        <h6 class="card-title" style="font-size:13px;font-weight:600;color:#1C3D22;">Posted amount share</h6>
+                        <p class="card-subtitle text-muted mb-2" style="font-size:10px;">By voucher type · click a slice to drill down</p>
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                            <span *ngFor="let cfg of voucherTypeConfig" class="d-flex align-items-center gap-1">
+                                <span class="rounded-1 d-inline-block" style="width:8px;height:8px;" [ngStyle]="{ background: cfg.color }"></span>
+                                <span style="font-size:10px;color:#6B8F6E;">{{ cfg.code }}</span>
+                            </span>
+                        </div>
+                        <div style="position:relative;height:200px;"><canvas #donutChartRef></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ── Charts row 2 ──────────────────────────────────────────────── -->
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <div class="card h-100 border-0 bglightgreen">
+                    <div class="card-body">
+                        <h6 class="card-title" style="font-size:13px;font-weight:600;color:#1C3D22;">Monthly posted amount trend</h6>
+                        <p class="card-subtitle text-muted mb-2" style="font-size:10px;">By voucher group · all active periods</p>
+                        <div style="position:relative;height:210px;"><canvas #lineChartRef></canvas></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100 border-0 bglightgreen">
+                    <div class="card-body">
+                        <h6 class="card-title" style="font-size:13px;font-weight:600;color:#1C3D22;">Posted amount by voucher group</h6>
+                        <p class="card-subtitle text-muted mb-2" style="font-size:10px;">Where the money moved &middot; hover for voucher counts</p>
+                        <div style="position:relative;height:210px;"><canvas #stackChartRef></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ── Voucher type breakdown ─────────────────────────────────────── -->
+        <div class="card mb-3 border-0 bglightgreen">
+            <div class="card-body">
+                <h6 class="card-title mb-3" style="font-size:13px;font-weight:600;color:#1C3D22;">Voucher type breakdown</h6>
+                <div class="row g-2">
+                    <div class="col-6 col-sm-4 col-md-3 col-xl-2" *ngFor="let m of voucherMetrics; trackBy: trackByCode">
+                        <div class="p-2 rounded border h-100 d-flex flex-column" style="cursor:pointer;transition:box-shadow .15s,border-color .15s;" [ngStyle]="selectedVoucherType?.code === m.voucherSysCategory
+                   ? { borderColor: getVoucherConfig(m.voucherSysCategory)?.color,
+                       background:  getVoucherConfig(m.voucherSysCategory)?.bgColor }
+                   : { borderColor: '#C8DFC5' }" (click)="selectVoucherType(getVoucherConfig(m.voucherSysCategory)!)">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <span class="badge" style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;" [ngStyle]="{ background: getVoucherConfig(m.voucherSysCategory)?.bgColor,
+                               color:      getVoucherConfig(m.voucherSysCategory)?.color }"> {{ m.voucherSysCategory }} </span>
+                                <small class="text-muted" style="font-size:9px;">{{ m.voucherGroup }}</small>
+                            </div>
+                            <div style="font-size:11px;font-weight:600;color:#1C3D22;margin:4px 0;">{{ m.description }}</div>
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between" style="font-size:10px;">
+                                    <span class="text-muted">Total</span>
+                                    <span class="fw-semibold" style="color:#1C3D22;">{{ m.totalCount | number }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between" style="font-size:10px;">
+                                    <span class="text-muted">Amount</span>
+                                    <span class="fw-semibold text-success">{{ fmtAmount(m.postedAmount) }}</span>
+                                </div>
+                                <div class="progress mt-1" style="height:3px;border-radius:2px;">
+                                    <div class="progress-bar bg-success" [style.width.%]="postedPct(m)"></div>
+                                    <div class="progress-bar bg-warning" [style.width.%]="onHoldPct(m)"></div>
+                                </div>
+                                <div class="d-flex justify-content-between mt-1" style="font-size:9px;color:#aaa;">
+                                    <span>{{ postedPct(m) }}% posted</span>
+                                    <span>{{ onHoldPct(m) }}% hold</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ── Recent transactions + Bank balances ────────────────────────── -->
+        <div class="row g-3">
+            <!-- Recent transactions -->
+            <div class="col-lg-8">
+                <div class="card h-100 border-0 bglightgreen">
+                    <div class="card-body">
+                        <!-- Status sits here, not in the page filter bar. It only
+                             filters these rows client-side; it does not affect the
+                             KPIs, charts or breakdown cards. In the filter bar it
+                             read like a page-level filter and was misleading. -->
+                        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                            <div>
+                                <h6 class="card-title mb-0" style="font-size:13px;font-weight:600;color:#1C3D22;">Recent transactions</h6>
+                                <small class="text-muted" style="font-size:10px;">Latest 20 vouchers for the selected bank and period</small>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="text-muted" style="font-size:11px;">Status</span>
+                                <select class="form-select form-select-sm" style="width:130px;font-size:12px;"
+                                        [(ngModel)]="selectedStatus" (ngModelChange)="onStatusFilterChange($event)">
+                                    <option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</option>
+                                </select>
+                                <small class="text-muted" style="font-size:11px;">{{ filteredRecentVouchers.length }} rows</small>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-0" style="font-size:12px;">
+                                <thead>
+                                    <tr style="background-color:#3A7D44;">
+                                        <th style="font-size:11px;font-weight:500;color:#fff;padding:8px 10px;border:none;">Voucher no.</th>
+                                        <th style="font-size:11px;font-weight:500;color:#fff;padding:8px 10px;border:none;">Type</th>
+                                        <th style="font-size:11px;font-weight:500;color:#fff;padding:8px 10px;border:none;">Narration</th>
+                                        <th style="font-size:11px;font-weight:500;color:#fff;padding:8px 10px;border:none;">Bank</th>
+                                        <th style="font-size:11px;font-weight:500;color:#fff;padding:8px 10px;border:none;" class="text-end">Amount</th>
+                                        <th style="font-size:11px;font-weight:500;color:#fff;padding:8px 10px;border:none;">Period</th>
+                                        <th style="font-size:11px;font-weight:500;color:#fff;padding:8px 10px;border:none;">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let v of filteredRecentVouchers; trackBy: trackByVchr">
+                                        <td style="white-space:nowrap;font-family:monospace;font-size:11px;" class="text-info">{{ v.voucherNo }}</td>
+                                        <td>
+                                            <span class="badge" [ngStyle]="{ background: getVoucherConfig(v.voucherSysCat)?.bgColor ?? '#f0f0f0',
+                                     color:      getVoucherConfig(v.voucherSysCat)?.color   ?? '#444' }"> {{ v.voucherSysCat }} </span>
+                                        </td>
+                                        <td class="text-truncate" style="max-width:180px;" [title]="v.description">{{ v.description || '—' }}</td>
+                                        <td>
+                                            <span *ngIf="v.bankCode" class="badge bg-info-subtle text-info border border-info-subtle">{{ v.bankCode }}</span>
+                                            <span *ngIf="!v.bankCode" class="text-muted">—</span>
+                                        </td>
+                                        <td class="text-end fw-semibold">{{ fmtAmount(v.amount) }}</td>
+                                        <td class="text-muted" style="font-size:11px;">{{ v.accPeriod }}</td>
+                                        <td>
+                                            <span class="badge rounded-pill" [ngClass]="{
+                          'bg-success-subtle text-success border border-success-subtle': v.ctrlStatus === 'Post',
+                          'bg-warning-subtle text-warning border border-warning-subtle': v.ctrlStatus === 'ONHOLD',
+                          'bg-secondary-subtle text-secondary':                          v.ctrlStatus === 'Draft'
+                        }">{{ statusLabel(v.ctrlStatus) }}</span>
+                                        </td>
+                                    </tr>
+                                    <tr *ngIf="!filteredRecentVouchers.length">
+                                        <td colspan="7" class="text-center text-muted py-3" style="font-size:12px;">No transactions found.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Bank balances -->
+            <div class="col-lg-4">
+                <div class="card h-100 border-0 bglightgreen">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h6 class="card-title mb-0" style="font-size:13px;font-weight:600;color:#1C3D22;">Bank account balances</h6>
+                            <span class="badge bg-secondary-subtle text-secondary">{{ bankSummary.length }}</span>
+                        </div>
+                        <div *ngFor="let b of bankSummary; trackBy: trackByBank" class="mb-1">
+                            <div class="d-flex align-items-center justify-content-between p-2 rounded" style="cursor:pointer;transition:background .12s;" [class.bg-body-secondary]="expandedBankCode === b.bankCode" (click)="toggleBankExpand(b.bankCode)">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="d-flex align-items-center justify-content-center rounded" style="width:28px;height:28px;background:#d4edda;flex-shrink:0;">
+                                        <i class="bi bi-bank" style="font-size:13px;color:#3A7D44;"></i>
+                                    </div>
+                                    <div>
+                                        <div style="font-size:12px;font-weight:600;color:#1C3D22;">{{ b.bankCode }} — {{ b.bankName }}</div>
+                                        <div style="font-size:10px;color:#6B8F6E;">{{ b.accountCount }} account{{ b.accountCount !== 1 ? 's' : '' }}</div>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div style="font-size:13px;font-weight:600;color:#1C3D22;">{{ fmtAmount(b.totalBalance) }}</div>
+                                    <i class="bi text-muted" style="font-size:10px;" [class.bi-chevron-down]="expandedBankCode !== b.bankCode" [class.bi-chevron-up]="expandedBankCode === b.bankCode"></i>
+                                </div>
+                            </div>
+                            <div *ngIf="expandedBankCode === b.bankCode" class="mt-1 ps-2">
+                                <table class="table table-sm mb-1" style="font-size:11px;">
+                                    <thead>
+                                        <tr>
+                                            <th style="font-size:10px;color:#6B8F6E;font-weight:500;padding:4px 8px;border-bottom:1px solid #C8DFC5;">Account</th>
+                                            <th style="font-size:10px;color:#6B8F6E;font-weight:500;padding:4px 8px;border-bottom:1px solid #C8DFC5;">Type</th>
+                                            <th style="font-size:10px;color:#6B8F6E;font-weight:500;padding:4px 8px;border-bottom:1px solid #C8DFC5;" class="text-end">Balance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr *ngFor="let a of b.accounts">
+                                            <td style="padding:5px 8px;border-bottom:1px solid #eef5ee;">
+                                                <span class="d-block" style="font-family:monospace;font-size:10px;">{{ a.accountCode }}</span>
+                                                <span class="text-muted">{{ a.accountName }}</span>
+                                            </td>
+                                            <td style="padding:5px 8px;border-bottom:1px solid #eef5ee;">
+                                                <span class="badge bg-secondary-subtle text-secondary">{{ a.accountType }}</span>
+                                            </td>
+                                            <td class="text-end fw-semibold" style="padding:5px 8px;border-bottom:1px solid #eef5ee;">{{ fmtAmount(a.balance) }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <div class="d-flex justify-content-between px-1" style="font-size:10px;color:#aaa;">
+                                    <span>On-hold: {{ fmtAmount(b.onHoldDebit) }}</span>
+                                    <span>Posted: {{ fmtAmount(b.postedDebit) }}</span>
+                                </div>
+                                <div class="progress mt-1" style="height:3px;border-radius:2px;">
+                                    <div class="progress-bar bg-warning" [style.width.%]="b.totalBalance > 0 ? (b.onHoldDebit / b.totalBalance * 100) : 0"></div>
+                                </div>
+                            </div>
+                            <hr class="my-1" style="border-color:#C8DFC5;" *ngIf="bankSummary.indexOf(b) < bankSummary.length - 1">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+</div>
+<!-- Spinner overlay -->
+<div *ngIf="isLoading" class="spinner-overlay">
+    <div class="spinner"></div>
+</div>

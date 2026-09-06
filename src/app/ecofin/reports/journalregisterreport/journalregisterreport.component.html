@@ -1,0 +1,124 @@
+<div class="p-3">
+    <form [formGroup]="filterForm" novalidate>
+        <div class="bglightgreen p-3 mb-3">
+            <div class="row align-items-start">
+                <div class="col-md-2">
+                    <label class="form-label mb-1">Financial Year <span class="text-danger">*</span></label>
+                    <select class="form-select" formControlName="year" (change)="onYearChange()" [ngClass]="{'is-invalid': isInvalid('year')}">
+                        <option [ngValue]="null">Select</option>
+                        <option *ngFor="let y of years" [ngValue]="y.financialyear"> {{ y.financialyear }} </option>
+                    </select>
+                    <div class="invalid-feedback d-block" *ngIf="hasError('year', 'required')">
+                        Financial Year is required.
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label mb-1">Month <span class="text-danger">*</span></label>
+                    <select class="form-select" formControlName="month" (change)="onMonthChange()" [ngClass]="{'is-invalid': isInvalid('month')}">
+                        <option [ngValue]="null">Select</option>
+                        <option *ngFor="let m of months" [ngValue]="m.accperiod"> {{ m.accmonth }} - {{ m.accyear }} </option>
+                    </select>
+                    <div class="invalid-feedback d-block" *ngIf="hasError('month', 'required')">
+                        Month is required.
+                    </div>
+                </div>
+                <div class="col-md-8 d-flex align-items-end mt-4 gap-2 flex-wrap">
+                    <button type="button" class="btn btn-primary" style="width: 80px;" (click)="onRetrieve()">Load</button>
+                    <button type="button" class="btn btn-primary" style="width: 80px;" (click)="onClose()">Clear</button>
+                    <ng-container *ngIf="voucherGroups.length > 0">
+                        <button type="button" class="btn btn-primary" style="width: 80px;" (click)="downloadPdf()">
+                            <i class="fa fa-download me-1"></i> PDF
+                        </button>
+                        <button type="button" class="btn btn-primary" style="width: 80px;" (click)="downloadExcel()">
+                            <i class="fa fa-download me-1"></i> Excel
+                        </button>
+                    </ng-container>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="table-responsive debit-table" *ngIf="voucherGroups.length > 0" style="height:65vh; max-height:65vh; overflow:auto;">
+        <table class="table table-borderless mb-0">
+            <thead class="table-light sticky-header">
+                <tr>
+                    <th style="text-align:left; width:8%;">Voucher Date</th>
+                    <th style="text-align:left; width:10%;">Voucher No</th>
+                    <th style="text-align:left; width:8%;">Onhold No</th>
+                    <th style="text-align:left; width:7%;">A/C Code</th>
+                    <th style="text-align:left; width:7%;">Sub Code</th>
+                    <th style="text-align:left; width:20%;">Description / Line Details</th>
+                    <th style="text-align:left; width:8%;">Ref.No / Date</th>
+                    <th style="text-align:right; width:9%;">Debit</th>
+                    <th style="text-align:right; width:9%;">Credit</th>
+                    <th style="text-align:left; width:14%;">Narration</th>
+                </tr>
+            </thead>
+            <tbody>
+                <ng-container *ngFor="let grp of voucherGroups; trackBy: trackByVoucherGroup">
+                    <tr *ngFor="let r of grp.rows; let rIdx = index; trackBy: trackByRow">
+                        <td style="text-align:left; vertical-align:top;">
+                            <span *ngIf="rIdx === 0">{{ grp.voucherDate }}</span>
+                        </td>
+                        <td style="text-align:left; vertical-align:top;">
+                            <span *ngIf="rIdx === 0">{{ grp.voucherNumber }}</span>
+                        </td>
+                        <td style="text-align:left; vertical-align:top;">
+                            <span *ngIf="rIdx === 0">{{ grp.onHoldNo }}</span>
+                        </td>
+                        <td style="text-align:left; vertical-align:top;">{{ r.accountCode }}</td>
+                        <td style="text-align:left; vertical-align:top;">{{ r.subCode }}</td>
+                        <td style="text-align:left; vertical-align:top;">
+                            <div>{{ r.description }}</div>
+                            <div class="text-muted" style="font-size:0.78rem;" *ngIf="r.particulars">
+                                {{ r.particulars }}
+                            </div>
+                            <div class="text-muted" style="font-size:0.78rem;" *ngIf="r.subCodeDescription">
+                                {{ r.subCodeDescription }}
+                            </div>
+                        </td>
+                        <td style="text-align:left; vertical-align:top;">
+                            <div>{{ r.referenceNumber }}</div>
+                            <div *ngIf="r.referenceDate">{{ r.referenceDate }}</div>
+                        </td>
+                        <td style="text-align:right; vertical-align:top;">
+                            <span *ngIf="r.dbCrFlag === 'D'">{{ r.amount | number:'1.2-2' }}</span>
+                        </td>
+                        <td style="text-align:right; vertical-align:top;">
+                            <span *ngIf="r.dbCrFlag === 'C'">{{ r.amount | number:'1.2-2' }}</span>
+                        </td>
+                        <td style="text-align:left; vertical-align:top;">
+                            <span *ngIf="rIdx === 0">{{ grp.narration }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="7" style="text-align:right; background-color:#EDF6EB; font-weight:bold;">
+                            Vchr Total
+                        </td>
+                        <td style="text-align:right; background-color:#EDF6EB; color:red; font-weight:bold;">
+                            {{ grp.debitTotal | number:'1.2-2' }}
+                        </td>
+                        <td style="text-align:right; background-color:#EDF6EB; color:blue; font-weight:bold;">
+                            {{ grp.creditTotal | number:'1.2-2' }}
+                        </td>
+                        <td style="background-color:#EDF6EB;"></td>
+                    </tr>
+                </ng-container>
+                <tr style="font-weight:bold;">
+                    <td colspan="7" style="text-align:right; background-color:#4EAA39; color:white;">Grand Total</td>
+                    <td style="text-align:right; background-color:#4EAA39; color:white;">
+                        {{ grandDebitTotal | number:'1.2-2' }}
+                    </td>
+                    <td style="text-align:right; background-color:#4EAA39; color:white;">
+                        {{ grandCreditTotal | number:'1.2-2' }}
+                    </td>
+                    <td style="background-color:#4EAA39; color:white;"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div *ngIf="isLoading" class="spinner-overlay">
+        <div class="spinner"></div>
+    </div>
+</div>

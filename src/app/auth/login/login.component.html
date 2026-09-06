@@ -1,0 +1,44 @@
+<main class="main">
+  <section id="ecofinlogin" class="ecofinlogin section py-0">
+    <div class="login-body shadow">
+      <div class="row m-0">
+        <div class="col-lg-6 col-md-6 d-none d-md-block p-0 position-relative">
+          <img src="assets/img/login-bg.jpg" alt="Login Background" class="img-fluid" style="height: 450px; width: 100%; border-top-left-radius: 5px; border-bottom-left-radius: 5px;" />
+        </div>
+        <div class="col-lg-6 col-md-6 col-12">
+          <div class="d-flex align-items-center justify-content-center h-100">
+            <div class="w-100 px-3">
+              <div class="text-center mb-4">
+                <h3 class="fw-bold">SIGN IN</h3>
+                <h6 class="text-muted">To Your Account</h6>
+              </div>
+              <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+                <div class="row gy-3">
+                  <div class="col-12 form-group">
+                    <label for="username" class="form-label">User Name </label>
+                    <input type="text" id="username" placeholder="Enter User Name" formControlName="username" class="form-control" [ngClass]="{ 'is-invalid': (loginForm.get('username')?.touched || formSubmit) && loginForm.get('username')?.errors }" required />
+                    <div *ngIf="(loginForm.get('username')?.touched || formSubmit) && loginForm.get('username')?.hasError('required')" class="text-danger"> User Name is required! </div>
+                  </div>
+                  <div class="col-12 form-group position-relative">
+                    <label for="password" class="form-label">Password </label>
+                    <input [type]="passwordview ? 'text' : 'password'" id="password" placeholder="Enter Password" autocomplete="off" formControlName="password" class="form-control" [ngClass]="{'is-invalid': (loginForm.get('password')?.touched || formSubmit) && loginForm.get('password')?.errors }" required />
+                    <div class="password-toggle" [ngClass]="passwordview ? 'signin-pass-visible' : 'signin-pass-invisible'" (click)="togglePasswordview()"></div>
+                    <div *ngIf="(loginForm.get('password')?.touched || formSubmit) && loginForm.get('password')?.hasError('required')" class="text-danger"> Password is required! </div>
+                  </div>
+                  <div class="col-12">
+                    <div class="d-grid">
+                      <button class="btn btn-success" type="submit">Login</button>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<div *ngIf="isLoading" class="spinner-overlay">
+  <div class="spinner"></div>
+</div>

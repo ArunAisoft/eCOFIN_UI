@@ -1,0 +1,165 @@
+<div class="p-3">
+    <form [formGroup]="permForm" novalidate>
+        <div class="bglightgreen p-3 mb-3">
+            <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                    <h6 class="fw-semibold mb-0">User Permissions</h6>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label class="form-label">User <span class="text-danger">*</span></label>
+                    <select class="form-select" formControlName="username" (change)="onUserChange()" [ngClass]="{'is-invalid': isInvalid('username')}">
+                        <option value="">Select User</option>
+                        <option *ngFor="let u of userList" [value]="u.username">{{ u.username }}</option>
+                    </select>
+                    <div class="invalid-feedback d-block" *ngIf="isInvalid('username')">Please select a user.</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Access Level <span class="text-danger">*</span></label>
+                    <div class="d-flex flex-wrap gap-3 pt-2">
+                        <div class="form-check form-check-inline" *ngFor="let lvl of accessLevels">
+                            <input class="form-check-input" type="radio" formControlName="accessLevel" [value]="lvl.value" [id]="'lvl_' + lvl.value" />
+                            <label class="form-check-label" [for]="'lvl_' + lvl.value">{{ lvl.label }}</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mt-4 d-flex justify-content-end gap-2">
+                    <button tabIndex="0" type="button" class="btn btn-primary" style="width: 80px;" (click)="onClear()" (keydown.enter)="onClear()">New</button>
+                    <button tabIndex="0" type="button" class="btn btn-success" style="width: 80px;" [disabled]="isSaving" (click)="onSave()" (keydown.enter)="onSave()">
+                        <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-1"></span>{{ isEditMode ? 'Update' : 'Save' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="bglightgreen p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                        <h6 class="fw-semibold mb-0">Task List</h6>
+                        <span class="text-muted small">Selected: {{ selectedTaskCount }} / {{ taskList.length }}</span>
+                    </div>
+                    <div class="row align-items-center mb-2">
+                        <div class="col-md-7 d-flex gap-2">
+                            <button type="button" class="btn btn-primary btn-sm" (click)="selectAllTasks()" [disabled]="taskList.length === 0">Select all</button>
+                            <button type="button" class="btn btn-primary btn-sm" (click)="unselectAllTasks()" [disabled]="taskList.length === 0">Unselect all</button>
+                        </div>
+                        <div class="col-md-5 d-flex gap-2">
+                            <input type="text" class="form-control form-control-sm" [(ngModel)]="searchTaskText" [ngModelOptions]="{standalone: true}" placeholder="Search tasks..." />
+                            <button class="btn btn-primary btn-sm" (click)="searchTaskText = ''">Clear</button>
+                        </div>
+                    </div>
+                    <div class="table-responsive" style="height:40vh; max-height:40vh; overflow:auto;">
+                        <table class="table table-borderless mb-0">
+                            <thead class="table-light sticky-header">
+                                <tr>
+                                    <th style="text-align:left; width:10%;">#</th>
+                                    <th style="text-align:left; width:90%;">Task Name</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let t of filteredTaskList" [class.table-warning]="activeTaskId === t.taskId">
+                                    <td style="vertical-align:middle;">
+                                        <input type="checkbox" class="form-check-input" [checked]="isTaskSelected(t.taskId)" (change)="toggleTask(t.taskId, $any($event.target).checked)" />
+                                    </td>
+                                    <td style="text-align:left; cursor:pointer;">
+                                        <a href="#" (click)="loadPanels(t.taskId); $event.preventDefault()">{{ t.taskFullName }}</a>
+                                    </td>
+                                </tr>
+                                <tr *ngIf="filteredTaskList.length === 0">
+                                    <td colspan="2" class="text-center text-muted py-3">
+                                        {{ taskList.length === 0 ? 'Select a user to load tasks.' : 'No tasks found.' }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="bglightgreen p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                        <h6 class="fw-semibold mb-0">Panel List</h6>
+                        <span class="text-muted small">Selected: {{ selectedPanelCount }} / {{ panelList.length }}</span>
+                    </div>
+                    <div class="row align-items-center mb-2">
+                        <div class="col-md-7 d-flex gap-2">
+                            <button type="button" class="btn btn-primary btn-sm" (click)="selectAllPanels()" [disabled]="panelList.length === 0">Select all</button>
+                            <button type="button" class="btn btn-primary btn-sm" (click)="unselectAllPanels()" [disabled]="panelList.length === 0">Unselect all</button>
+                        </div>
+                        <div class="col-md-5 d-flex gap-2">
+                            <input type="text" class="form-control form-control-sm" [(ngModel)]="searchPanelText" [ngModelOptions]="{standalone: true}" placeholder="Search panels..." />
+                            <button class="btn btn-primary btn-sm" (click)="searchPanelText = ''">Clear</button>
+                        </div>
+                    </div>
+                    <div class="table-responsive" style="height:40vh; max-height:40vh; overflow:auto;">
+                        <table class="table table-borderless mb-0">
+                            <thead class="table-light sticky-header">
+                                <tr>
+                                    <th style="text-align:left; width:10%;">#</th>
+                                    <th style="text-align:left; width:90%;">Panel Name</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let p of filteredPanelList">
+                                    <td style="vertical-align:middle;">
+                                        <input type="checkbox" class="form-check-input" [checked]="isPanelSelected(p.panelId)" (change)="togglePanel(p.panelId, $any($event.target).checked)" />
+                                    </td>
+                                    <td class="align-middle text-start">{{ p.panelFullName }}</td>
+                                </tr>
+                                <tr *ngIf="filteredPanelList.length === 0">
+                                    <td colspan="2" class="text-center text-muted py-3">
+                                        {{ activeTaskId ? 'No panels found.' : 'Click a task to load its panels.' }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="row align-items-center mb-2">
+        <div class="col-md-9">
+            <span class="text-muted small">Showing {{ filteredPermissionList.length }} of {{ permissionList.length }} permissions</span>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <input type="text" class="form-control" [(ngModel)]="searchText" [ngModelOptions]="{standalone: true}" placeholder="Search..." />
+            <button class="btn btn-primary" (click)="searchText = ''">Clear</button>
+        </div>
+    </div>
+    <div class="table-responsive mb-3" style="height:50vh; max-height:50vh; overflow:auto;">
+        <table class="table table-borderless mb-0">
+            <thead class="table-light sticky-header">
+                <tr>
+                    <th style="text-align:left; width:20%;">Username</th>
+                    <th style="text-align:left; width:35%;">Full Name</th>
+                    <th style="text-align:left; width:15%;">Access Level</th>
+                    <th style="text-align:left; width:15%;">Tasks</th>
+                    <th style="text-align:left; width:15%;">Panels</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let row of filteredPermissionList" [class.table-warning]="isEditMode && row.username === editingCode">
+                    <td style="text-align:left; cursor:pointer;">
+                        <a href="#" (click)="startEdit(row); $event.preventDefault()">{{ row.username }}</a>
+                    </td>
+                    <td class="align-middle text-start">{{ row.nameDescription }}</td>
+                    <td class="align-middle text-start">{{ accessLevelLabel(row.levelNumber) }}</td>
+                    <td class="align-middle text-start">{{ row.taskCount }}</td>
+                    <td class="align-middle text-start">{{ row.panelCount }}</td>
+                </tr>
+                <tr *ngIf="filteredPermissionList.length === 0">
+                    <td colspan="5" class="text-center text-muted py-3">No permissions assigned.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div *ngIf="isLoading" class="spinner-overlay">
+    <div class="spinner"></div>
+</div>

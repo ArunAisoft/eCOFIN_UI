@@ -1,0 +1,90 @@
+<div class="p-3">
+  <form [formGroup]="filterForm" novalidate>
+    <div class="bglightgreen p-3 mb-3">
+      <div class="row align-items-end g-2">
+
+        <!-- Acc Period -->
+
+        <!-- From Date -->
+        <div class="col-md-2">
+          <label class="form-label mb-1">From Date <span class="text-danger">*</span></label>
+          <input type="date" class="form-control" formControlName="fromDate" [max]="today"
+                 [ngClass]="{'is-invalid': isInvalid('fromDate')}" />
+          <div class="invalid-feedback d-block" *ngIf="hasError('fromDate','required')">Required.</div>
+        </div>
+
+        <!-- To Date -->
+        <div class="col-md-2">
+          <label class="form-label mb-1">To Date <span class="text-danger">*</span></label>
+          <input type="date" class="form-control" formControlName="toDate" [max]="today"
+                 [ngClass]="{'is-invalid': isInvalid('toDate')}" />
+          <div class="invalid-feedback d-block" *ngIf="hasError('toDate','required')">Required.</div>
+          <div class="invalid-feedback d-block" *ngIf="filterForm.get('toDate')?.hasError('dateInvalid')">
+            To Date must be ≥ From Date.
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="col-md-8 d-flex align-items-end gap-2 flex-wrap">
+          <button type="button" class="btn btn-primary" style="width:90px;" (click)="onRetrieve()">Load</button>
+          <button type="button" class="btn btn-primary" style="width:90px;" (click)="onClose()">Clear</button>
+          <ng-container *ngIf="reportRows.length > 0">
+            <button type="button" class="btn btn-primary" style="width:90px;" (click)="downloadPdf()">
+              <i class="fa fa-download me-1"></i>PDF
+            </button>
+            <button type="button" class="btn btn-primary" style="width:90px;" (click)="downloadExcel()">
+              <i class="fa fa-download me-1"></i>Excel
+            </button>
+          </ng-container>
+        </div>
+
+      </div>
+    </div>
+  </form>
+
+  <!-- ══ GENERAL LEDGER TABLE ══════════════════════════════════════════════ -->
+  <div *ngIf="reportRows.length > 0"
+       class="table-responsive" style="height:65vh; max-height:65vh; overflow:auto;">
+    <table class="table table-borderless mb-0" style="font-size:0.78rem;">
+      <thead class="table-light sticky-header">
+        <tr>
+          <th style="width:12%;">Account Code</th>
+          <th style="width:20%;">Account Description</th>
+          <th style="width:9%;">Vchr No</th>
+          <th style="width:7%;">Date</th>
+          <th style="width:18%;">Particulars</th>
+          <th style="width:7%;">Ref No</th>
+          <th style="width:7%;">Inst No</th>
+          <th style="text-align:right; width:10%;">Amount</th>
+          <th style="text-align:right; width:10%;">Closing Bal</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of reportRows"
+            [class.fw-bold]="row.sequenceNo === '7'"
+            [class.fst-italic]="row.sequenceNo === '1' || row.sequenceNo === '2'">
+          <td>{{ row.accountCode }}</td>
+          <td>{{ row.accountDescription }}</td>
+          <td>{{ row.vchrNumber }}</td>
+          <td>{{ row.vchrDate }}</td>
+          <td>{{ row.lineDetails }}</td>
+          <td>{{ row.vchrRefNumber }}</td>
+          <td>{{ row.instrumentNo }}</td>
+          <td style="text-align:right;">{{ row.voucherAmount | number:'1.2-2' }}</td>
+          <td style="text-align:right;">{{ row.closingBalance | number:'1.2-2' }}</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr class="fw-bold" style="background-color:#4EAA39; color:white;">
+          <td colspan="7" style="text-align:right;">Grand Total</td>
+          <td style="text-align:right;">{{ totalAmount | number:'1.2-2' }}</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+<div *ngIf="isLoading" class="spinner-overlay">
+  <div class="spinner"></div>
+</div>

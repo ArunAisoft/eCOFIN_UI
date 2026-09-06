@@ -1,0 +1,95 @@
+<div class="p-3">
+    <form [formGroup]="filterForm" novalidate>
+        <div class="bglightgreen p-3 mb-3">
+            <div class="row align-items-start">
+                <!-- Account Code -->
+                <div class="col-md-3">
+                    <label class="form-label mb-1">Account Code <span class="text-danger">*</span></label>
+                    <app-multi-select formControlName="accountCode" [items]="accounts" bindValue="accountCode" [displayWith]="accDisplay" placeholder="Select Account(s)" [maxDisplayCount]="2" (selectionChange)="onAccountChange($event)">
+                    </app-multi-select>
+                    <div class="invalid-feedback d-block" *ngIf="hasError('accountCode', 'required')"> Account Code is required. </div>
+                </div>
+                <!-- From Date -->
+                <div class="col-md-2">
+                    <label class="form-label mb-1">From Date <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" formControlName="fromDate" [max]="today" [ngClass]="{ 'is-invalid': isInvalid('fromDate') }" />
+                    <div class="invalid-feedback d-block" *ngIf="hasError('fromDate', 'required')"> From Date is required. </div>
+                </div>
+                <!-- To Date -->
+                <div class="col-md-2">
+                    <label class="form-label mb-1">To Date <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" formControlName="toDate" [max]="today" [ngClass]="{ 'is-invalid': isInvalid('toDate') }" />
+                    <div class="invalid-feedback d-block" *ngIf="hasError('toDate', 'required')"> To Date is required. </div>
+                    <div class="invalid-feedback d-block" *ngIf="filterForm.get('toDate')?.hasError('dateInvalid')"> To Date should be >= From Date. </div>
+                </div>
+                <!-- Actions -->
+                <div class="col-md-5 d-flex align-items-end mt-4 gap-2 flex-wrap">
+                    <button type="button" class="btn btn-primary" style="width: 80px;" (click)="onRetrieve()">Load</button>
+                    <button type="button" class="btn btn-primary" style="width: 80px;" (click)="onClose()">Clear</button>
+                    <ng-container *ngIf="reportRows.length > 0">
+                        <button type="button" class="btn btn-primary" style="width: 80px;" (click)="downloadPdf()">
+                            <i class="fa fa-download me-1"></i> PDF </button>
+                        <button type="button" class="btn btn-primary" style="width: 80px;" (click)="downloadExcel()">
+                            <i class="fa fa-download me-1"></i> Excel </button>
+                    </ng-container>
+                </div>
+            </div>
+        </div>
+    </form>
+    <!-- Report Table -->
+    <div class="table-responsive debit-table" *ngIf="reportRows.length > 0" style="height:65vh; max-height:65vh; overflow:auto;">
+        <table class="table table-borderless mb-0">
+            <thead class="table-light sticky-header">
+                <tr>
+                    <th style="text-align:left; width:7%;">Acc Period</th>
+                    <th style="text-align:left; width:8%;">A/C Code</th>
+                    <th style="text-align:left; width:10%;">Description</th>
+                    <th style="text-align:left; width:9%;">Vchr No</th>
+                    <th style="text-align:left; width:7%;">Vchr Date</th>
+                    <th style="text-align:left; width:8%;">Cost Centre</th>
+                    <th style="text-align:left; width:8%;">Sub A/C</th>
+                    <th style="text-align:left; width:7%;">Cost Type</th>
+                    <th style="text-align:left; width:7%;">Expense Type</th>
+                    <th style="text-align:left; width:9%;">Line Particulars</th>
+                    <th style="text-align:left; width:7%;">Ref No / Date</th>
+                    <th style="text-align:right; width:7%;">Debit</th>
+                    <th style="text-align:right; width:6%;">Credit</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let r of reportRows; trackBy: trackByRow">
+                    <td style="text-align:left;">{{ r.accPeriod }}</td>
+                    <td style="text-align:left;">{{ r.accountCode }}</td>
+                    <td style="text-align:left;">{{ r.description }}</td>
+                    <td style="text-align:left;">{{ r.voucherNumber }}</td>
+                    <td style="text-align:left;">{{ r.voucherDate }}</td>
+                    <td style="text-align:left;"> {{ r.costCentreCode }} <div class="text-muted" style="font-size:0.78rem;" *ngIf="r.costCentreDesc"> {{ r.costCentreDesc }} </div>
+                    </td>
+                    <td style="text-align:left;">{{ r.subAccountCode }}</td>
+                    <td style="text-align:left;">{{ r.costType }}</td>
+                    <td style="text-align:left;">{{ r.expenseType }}</td>
+                    <td style="text-align:left;">{{ r.lineParticulars }}</td>
+                    <td style="text-align:left;">
+                        <div>{{ r.referenceNumber }}</div>
+                        <div *ngIf="r.referenceDate">{{ r.referenceDate }}</div>
+                    </td>
+                    <td style="text-align:right;">
+                        <span *ngIf="r.dbCrFlag === 'D'">{{ r.amount | number:'1.2-2' }}</span>
+                    </td>
+                    <td style="text-align:right;">
+                        <span *ngIf="r.dbCrFlag === 'C'">{{ r.amount | number:'1.2-2' }}</span>
+                    </td>
+                </tr>
+                <!-- Grand total -->
+                <tr style="font-weight:bold;">
+                    <td colspan="11" style="text-align:right; background-color:#4EAA39; color:white;"> Grand Total </td>
+                    <td style="text-align:right; background-color:#4EAA39; color:white;"> {{ grandDebitTotal | number:'1.2-2' }} </td>
+                    <td style="text-align:right; background-color:#4EAA39; color:white;"> {{ grandCreditTotal | number:'1.2-2' }} </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div *ngIf="isLoading" class="spinner-overlay">
+        <div class="spinner"></div>
+    </div>
+</div>

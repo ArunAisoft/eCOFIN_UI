@@ -1,0 +1,156 @@
+<div class="p-3">
+    <form [formGroup]="filterForm" novalidate>
+        <div class="bglightgreen p-3 mb-3">
+            <div class="row align-items-end">
+                <div class="col-md-2">
+                    <label class="form-label mb-1">Report Type <span class="text-danger">*</span></label>
+                    <select class="form-select" formControlName="reportType" [ngClass]="{'is-invalid': isInvalid('reportType')}">
+                        <option value="Debtors">Debtors</option>
+                        <option value="Creditors">Creditors</option>
+                    </select>
+                    <div class="invalid-feedback d-block" *ngIf="hasError('reportType','required')">Required.</div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label mb-1">Report Date <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" formControlName="reportDate" [max]="today" [ngClass]="{'is-invalid': isInvalid('reportDate')}" />
+                    <div class="invalid-feedback d-block" *ngIf="hasError('reportDate','required')">Date is required.</div>
+                </div>
+                <div class="col-md-8 d-flex align-items-end gap-2 flex-wrap">
+                    <button type="button" class="btn btn-primary" style="width:90px;" (click)="onRetrieve()">Load</button>
+                    <button type="button" class="btn btn-primary" style="width:90px;" (click)="onClose()">Clear</button>
+                    <ng-container *ngIf="groupedParties.length > 0">
+                        <button type="button" class="btn btn-primary" style="width:90px;" (click)="downloadPdf()">
+                            <i class="fa fa-download me-1"></i> PDF </button>
+                        <button type="button" class="btn btn-primary" style="width:90px;" (click)="downloadExcel()">
+                            <i class="fa fa-download me-1"></i> Excel </button>
+                    </ng-container>
+                </div>
+            </div>
+        </div>
+    </form>
+    <!-- ── Report ─────────────────────────────────────────────────────── -->
+    <div class="table-responsive" *ngIf="groupedParties.length > 0" style="height:65vh; max-height:65vh; overflow:auto;">
+        <table class="table table-borderless mb-0" style="font-size:0.8rem;">
+            <thead class="table-light sticky-header">
+                <tr>
+                    <th style="text-align:left; width:12%;">Voucher No</th>
+                    <th style="text-align:left; width:8%;">Vchr Date</th>
+                    <th style="text-align:left; width:8%;">Bill No</th>
+                    <th style="text-align:left; width:8%;">Bill Due Dt</th>
+                    <th style="text-align:right; width:7%;">&lt;= 30</th>
+                    <th style="text-align:right; width:8%;">31 to 45</th>
+                    <th style="text-align:right; width:8%;">46 to 90</th>
+                    <th style="text-align:right; width:8%;">91 to 120</th>
+                    <th style="text-align:right; width:9%;">121 to 180</th>
+                    <th style="text-align:right; width:8%;">&gt; 180</th>
+                    <th style="text-align:right; width:8%;">Total</th>
+                    <th style="text-align:left; width:6%;">Days</th>
+                </tr>
+            </thead>
+            <tbody>
+                <ng-container *ngFor="let party of groupedParties">
+                    <!-- Party header -->
+                    <tr class="fw-semibold" style="background:#e8f5e9;">
+                        <td colspan="12" style="text-align:left; padding:6px 4px;"> {{ party.accountCode }} {{ party.subAccountCode }} : {{ party.partyName }} </td>
+                    </tr>
+                    <!-- Bills section -->
+                    <ng-container *ngIf="party.bills.length > 0">
+                        <tr>
+                            <td colspan="12" class="text-center fst-italic text-muted" style="padding:2px 4px;">Bills</td>
+                        </tr>
+                        <tr *ngFor="let row of party.bills">
+                            <td style="text-align:left;">{{ row.vchrNumber }}</td>
+                            <td style="text-align:left;">{{ row.vchrDate | date:'dd/MM/yyyy' }}</td>
+                            <td style="text-align:left;">{{ row.billNo }}</td>
+                            <td style="text-align:left;">{{ row.billDueDate | date:'dd/MM/yyyy' }}</td>
+                            <td style="text-align:right;">{{ row.bucket0_30 | number:'1.2-2' }}</td>
+                            <td style="text-align:right;">{{ row.bucket30_45 | number:'1.2-2' }}</td>
+                            <td style="text-align:right;">{{ row.bucket46_90 | number:'1.2-2' }}</td>
+                            <td style="text-align:right;">{{ row.bucket91_120 | number:'1.2-2' }}</td>
+                            <td style="text-align:right;">{{ row.bucket121_180 | number:'1.2-2' }}</td>
+                            <td style="text-align:right;">{{ row.bucket180Plus | number:'1.2-2' }}</td>
+                            <td style="text-align:right;">{{ row.total | number:'1.2-2' }}</td>
+                            <td style="text-align:left;">{{ row.daysOutstanding }}</td>
+                        </tr>
+                        <!-- Total Bills -->
+                        <tr class="fw-semibold" style="background:#f1f8e9;">
+                            <td colspan="4" style="text-align:right;">Total Bills</td>
+                            <td style="text-align:right;">{{ party.billTotals.bucket0_30 | number:'1.2-2' }}</td>
+                            <td style="text-align:right;">{{ party.billTotals.bucket30_45 | number:'1.2-2' }}</td>
+                            <td style="text-align:right;">{{ party.billTotals.bucket46_90 | number:'1.2-2' }}</td>
+                            <td style="text-align:right;">{{ party.billTotals.bucket91_120 | number:'1.2-2' }}</td>
+                            <td style="text-align:right;">{{ party.billTotals.bucket121_180 | number:'1.2-2' }}</td>
+                            <td style="text-align:right;">{{ party.billTotals.bucket180Plus | number:'1.2-2' }}</td>
+                            <td style="text-align:right;">{{ party.billTotals.total | number:'1.2-2' }}</td>
+                            <td></td>
+                        </tr>
+                    </ng-container>
+                    <!-- Payments section -->
+                    <ng-container *ngIf="party.payments.length > 0">
+                        <tr>
+                            <td colspan="12" class="text-center fst-italic text-muted" style="padding:2px 4px;">Payments</td>
+                        </tr>
+                        <tr *ngFor="let row of party.payments">
+                            <td style="text-align:left;">{{ row.vchrNumber }}</td>
+                            <td style="text-align:left;">{{ row.vchrDate | date:'dd/MM/yyyy' }}</td>
+                            <td style="text-align:left;">{{ row.billNo }}</td>
+                            <td style="text-align:left;">{{ row.billDueDate | date:'dd/MM/yyyy' }}</td>
+                            <td style="text-align:right;">{{ row.bucket0_30 | number:'1.2-2' }}</td>
+                            <td style="text-align:right;">{{ row.bucket30_45 | number:'1.2-2' }}</td>
+                            <td style="text-align:right;">{{ row.bucket46_90 | number:'1.2-2' }}</td>
+                            <td style="text-align:right;">{{ row.bucket91_120 | number:'1.2-2' }}</td>
+                            <td style="text-align:right;">{{ row.bucket121_180 | number:'1.2-2' }}</td>
+                            <td style="text-align:right;">{{ row.bucket180Plus | number:'1.2-2' }}</td>
+                            <td style="text-align:right;">{{ row.total | number:'1.2-2' }}</td>
+                            <td style="text-align:left;">{{ row.daysOutstanding }}</td>
+                        </tr>
+                        <!-- Total Payments -->
+                        <tr class="fw-semibold" style="background:#f1f8e9;">
+                            <td colspan="4" style="text-align:right;">Total Payments</td>
+                            <td style="text-align:right;">{{ party.paymentTotals.bucket0_30 | number:'1.2-2' }}</td>
+                            <td style="text-align:right;">{{ party.paymentTotals.bucket30_45 | number:'1.2-2' }}</td>
+                            <td style="text-align:right;">{{ party.paymentTotals.bucket46_90 | number:'1.2-2' }}</td>
+                            <td style="text-align:right;">{{ party.paymentTotals.bucket91_120 | number:'1.2-2' }}</td>
+                            <td style="text-align:right;">{{ party.paymentTotals.bucket121_180 | number:'1.2-2' }}</td>
+                            <td style="text-align:right;">{{ party.paymentTotals.bucket180Plus | number:'1.2-2' }}</td>
+                            <td style="text-align:right;">{{ party.paymentTotals.total | number:'1.2-2' }}</td>
+                            <td></td>
+                        </tr>
+                    </ng-container>
+                    <!-- Total for Party -->
+                    <tr class="fw-bold border-top" style="background:#c8e6c9;">
+                        <td colspan="4" style="text-align:right;">Total for Party</td>
+                        <td style="text-align:right;">{{ party.partyTotals.bucket0_30 | number:'1.2-2' }}</td>
+                        <td style="text-align:right;">{{ party.partyTotals.bucket30_45 | number:'1.2-2' }}</td>
+                        <td style="text-align:right;">{{ party.partyTotals.bucket46_90 | number:'1.2-2' }}</td>
+                        <td style="text-align:right;">{{ party.partyTotals.bucket91_120 | number:'1.2-2' }}</td>
+                        <td style="text-align:right;">{{ party.partyTotals.bucket121_180 | number:'1.2-2' }}</td>
+                        <td style="text-align:right;">{{ party.partyTotals.bucket180Plus | number:'1.2-2' }}</td>
+                        <td style="text-align:right;">{{ party.partyTotals.total | number:'1.2-2' }}</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td colspan="12" style="height:4px;"></td>
+                    </tr>
+                </ng-container>
+            </tbody>
+            <!-- Grand Total -->
+            <tfoot>
+                <tr class="fw-bold" style="background-color:#4EAA39; color:white;">
+                    <td colspan="4" style="text-align:right;">Grand Total</td>
+                    <td style="text-align:right;">{{ grandTotals.bucket0_30 | number:'1.2-2' }}</td>
+                    <td style="text-align:right;">{{ grandTotals.bucket30_45 | number:'1.2-2' }}</td>
+                    <td style="text-align:right;">{{ grandTotals.bucket46_90 | number:'1.2-2' }}</td>
+                    <td style="text-align:right;">{{ grandTotals.bucket91_120 | number:'1.2-2' }}</td>
+                    <td style="text-align:right;">{{ grandTotals.bucket121_180 | number:'1.2-2' }}</td>
+                    <td style="text-align:right;">{{ grandTotals.bucket180Plus | number:'1.2-2' }}</td>
+                    <td style="text-align:right;">{{ grandTotals.total | number:'1.2-2' }}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+<div *ngIf="isLoading" class="spinner-overlay">
+    <div class="spinner"></div>
+</div>

@@ -1,0 +1,97 @@
+<div class="p-3">
+    <form [formGroup]="form">
+        <div class="table-responsive mb-3" style="height:78vh; max-height:78vh; overflow:auto;">
+            <table class="table table-borderless mb-0">
+                <thead class="table-light sticky-header">
+                    <tr>
+                        <th style="text-align:left; width:13%;">Code <span class="text-danger">*</span></th>
+                        <th style="text-align:left; width:55%;">Description <span class="text-danger">*</span></th>
+                        <th style="text-align:left; width:12%;">Centre Type</th>
+                        <th style="text-align:left; width:12%;">Status <span class="text-danger">*</span></th>
+                        <th style="text-align:left; width:8%;">Action</th>
+                    </tr>
+                </thead>
+                <tbody formArrayName="costCentres">
+                    <tr *ngFor="let row of costCentres.controls; let i = index" [formGroupName]="i">
+                        <ng-container *ngIf="row.get('isNew')?.value">
+                            <td style="text-align:left;">
+                                <input class="form-control form-control-sm" formControlName="costCentreCode" placeholder="e.g. 1101" [ngClass]="{ 'is-invalid': isRowInvalid(row, 'costCentreCode') }" />
+                                <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'costCentreCode', 'required')">Code is required.</div>
+                                <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'costCentreCode', 'maxlength')">Max 10 characters.</div>
+                            </td>
+                            <td style="text-align:left;">
+                                <input class="form-control form-control-sm" formControlName="description" placeholder="Description" [ngClass]="{ 'is-invalid': isRowInvalid(row, 'description') }" />
+                                <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'description', 'required')">Description is required.</div>
+                                <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'description', 'maxlength')">Max 100 characters.</div>
+                            </td>
+                            <td style="text-align:left;">
+                                <select class="form-select form-select-sm" formControlName="centreType" [ngClass]="{ 'is-invalid': isRowInvalid(row, 'centreType') }">
+                                    <option value="">Select Type</option>
+                                    <option *ngFor="let t of centreTypeOptions" [value]="t.value">{{ t.label }}</option>
+                                </select>
+                            </td>
+                            <td style="text-align:left;">
+                                <select class="form-select form-select-sm" formControlName="objectStatus" [ngClass]="{ 'is-invalid': isRowInvalid(row, 'objectStatus') }">
+                                    <option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</option>
+                                </select>
+                                <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'objectStatus', 'required')">Status is required.</div>
+                            </td>
+                            <td style="text-align:left;">
+                                <i class="fa fa-save fs-5 me-2 text-success" style="cursor:pointer;" title="Save" (click)="saveNewRow(i)"></i>
+                                <i class="fa fa-times-circle fs-5 text-danger" style="cursor:pointer;" title="Clear" (click)="clearNewRow(i)"></i>
+                            </td>
+                        </ng-container>
+                        <ng-container *ngIf="!row.get('isNew')?.value">
+                            <td style="text-align:left;">
+                                <strong>{{ row.get('costCentreCode')?.value }}</strong>
+                            </td>
+                            <td class="align-middle text-start;">
+                                <span *ngIf="!row.get('isEdit')?.value">{{ row.get('description')?.value }}</span>
+                                <ng-container *ngIf="row.get('isEdit')?.value">
+                                    <input class="form-control form-control-sm" formControlName="description" [ngClass]="{ 'is-invalid': isRowInvalid(row, 'description') }" />
+                                    <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'description', 'required')">Description is required.</div>
+                                    <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'description', 'maxlength')">Max 100 characters.</div>
+                                </ng-container>
+                            </td>
+                            <td class="align-middle text-start;">
+                                <span *ngIf="!row.get('isEdit')?.value">{{ centreTypeLabel(row.get('centreType')?.value) }}</span>
+                                <ng-container *ngIf="row.get('isEdit')?.value">
+                                    <select class="form-select form-select-sm" formControlName="centreType">
+                                        <option value="">Select Type</option>
+                                        <option *ngFor="let t of centreTypeOptions" [value]="t.value">{{ t.label }}</option>
+                                    </select>
+                                </ng-container>
+                            </td>
+                            <td class="align-middle text-start;">
+                                <ng-container *ngIf="!row.get('isEdit')?.value">
+                                    <span> {{ statusLabel(row.get('objectStatus')?.value) }} </span>
+                                </ng-container>
+                                <ng-container *ngIf="row.get('isEdit')?.value">
+                                    <select class="form-select form-select-sm" formControlName="objectStatus" [ngClass]="{ 'is-invalid': isRowInvalid(row, 'objectStatus') }">
+                                        <option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</option>
+                                    </select>
+                                    <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'objectStatus', 'required')">Status is required.</div>
+                                </ng-container>
+                            </td>
+                            <td class="align-middle text-start;">
+                                <ng-container *ngIf="!row.get('isEdit')?.value">
+                                    <i class="fa fa-pencil fs-5 text-success" style="cursor:pointer;" title="Edit" (click)="startEdit(i)"></i>
+                                </ng-container>
+                                <ng-container *ngIf="row.get('isEdit')?.value">
+                                    <i class="fa fa-check fs-5 text-success me-2" style="cursor:pointer;" title="Update" (click)="updateRow(i)"></i>
+                                    <i class="fa fa-times fs-5 text-danger" style="cursor:pointer;" title="Cancel" (click)="cancelEdit(i)"></i>
+                                </ng-container>
+                            </td>
+                        </ng-container>
+                    </tr>
+                    <tr *ngIf="costCentres.controls.length === 0">
+                        <td colspan="5" class="text-center text-muted py-3">No cost centres found.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </form>
+</div>
+<div *ngIf="isLoading" class="spinner-overlay">
+    <div class="spinner"></div>
+</div>

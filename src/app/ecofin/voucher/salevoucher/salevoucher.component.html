@@ -1,0 +1,478 @@
+<div class="mt-3" [formGroup]="form">
+    <div class="bglightgreen p-3 mb-3">
+        <div class="row d-flex align-items-center">
+            <div class="col-md-3" [formGroup]="header">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label mb-1">Financial Year <span class="text-danger">*</span></label>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label mb-1">Month <span class="text-danger">*</span></label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <select tabIndex="0" class="form-select" formControlName="year" (change)="onYearChange()" [ngClass]="{'is-invalid': header.get('year')?.invalid && (header.get('year')?.touched || header.get('year')?.dirty)}">
+                            <option [ngValue]="null">Select</option>
+                            <option *ngFor="let year of years" [ngValue]="year.financialyear">{{ year.financialyear }}</option>
+                        </select>
+                        <div class="invalid-feedback d-block" *ngIf="header.get('year')?.invalid && (header.get('year')?.touched || header.get('year')?.dirty)"> Year is required. </div>
+                    </div>
+                    <div class="col-md-6">
+                        <select tabIndex="0" class="form-select" formControlName="month" (change)="onMonthChange()" [ngClass]="{'is-invalid': header.get('month')?.invalid && (header.get('month')?.touched || header.get('month')?.dirty)}">
+                            <option [ngValue]="null">Select</option>
+                            <option *ngFor="let m of months" [ngValue]="m.accperiod">{{ m.accmonth }} - {{ m.accyear }}</option>
+                        </select>
+                        <div class="invalid-feedback d-block" *ngIf="header.get('month')?.invalid && (header.get('month')?.touched || header.get('month')?.dirty)"> Month is required. </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="row">
+                            <div class="col-12 mb-1">
+                                <label> Voucher No : <b [ngClass]="getTextClass(voucherNo)">{{ voucherNo || 'NA' }}</b> </label>
+                            </div>
+                            <div class="col-12">
+                                <label> Onhold No : <b [ngClass]="getTextClass(onHoldNo)">{{ onHoldNo || 'NA' }}</b> </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-md-4 pe-0">
+                        <div class="col-md-12 mb-1"><label> Created Date : <b>{{ createdDate || 'NA' }}</b> </label></div>
+                        <div class="col-md-12"><label> Updated Date : <b>{{ updatedDate || 'NA' }}</b> </label></div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="d-flex gap-2 justify-content-end">
+                            <button tabIndex="0" type="button" class="btn btn-primary" style="width: 100px;" (click)="resetAllVoucherFields()" (keydown.enter)="resetAllVoucherFields()">New</button>
+                            <button tabIndex="0" type="button" [disabled]="isVoucherNoGenertaed" class="btn" [ngClass]="isOnHoldNoGenerated ? 'btn-success' : 'btn-danger'" style="width: 100px;" (click)="onHold()" (keydown.enter)="onHold()"> OnHold </button>
+                            <button tabIndex="0" type="button" [disabled]="isVoucherNoGenertaed" class="btn" [ngClass]="isVoucherNoGenertaed ? 'btn-success' : 'btn-danger'" style="width: 100px;" (click)="onPost()" (keydown.enter)="onPost()"> Post </button>
+                            <button tabIndex="0" type="button" class="btn btn-primary" style="width: 100px;" (click)="onView()" (keydown.enter)="onView()">View</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="bglightgreen p-3 mb-3" [formGroup]="bankBlock">
+        <div class="flex-grow-1">
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2 ">
+                <div>
+                    <h6 class=" fw-semibold mb-0">Group Account details</h6>
+                </div>
+                <div> Balance : <b class="text-success">{{ balance | number:'1.2-2' }}</b></div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-3">
+                <label for="bank" class="form-label">Group Account <span class="text-danger">*</span></label>
+                <app-searchable-select id="bank" class="form-select" tabIndex="0" formControlName="bank" [items]="banks" bindValue="bankCode" [displayWith]="bankLabel" placeholder="Select Group Account" nullOptionLabel="Select Group Account" [searchable]="true">
+                </app-searchable-select>
+                <div class="invalid-feedback d-block" *ngIf="bankBlock.get('bank')?.invalid && (bankBlock.get('bank')?.touched || bankBlock.get('bank')?.dirty)"> Group Account is required. </div>
+            </div>
+            <div class="col-md-3">
+                <label for="bankAccount" class="form-label">Account <span class="text-danger">*</span></label>
+                <app-searchable-select id="bankAccount" class="form-select" tabIndex="0" (selectionChange)="onBankAccountChange()" formControlName="bankAccount" [items]="bankAccounts" bindValue="accountCode" [displayWith]="accountLabel" placeholder="Select Account" nullOptionLabel="Select Account" [searchable]="true">
+                </app-searchable-select>
+                <div class="invalid-feedback d-block" *ngIf="bankBlock.get('bankAccount')?.invalid && (bankBlock.get('bankAccount')?.touched || bankBlock.get('bankAccount')?.dirty)"> Account is required. </div>
+            </div>
+        </div>
+    </div>
+    <div class="bglightgreen p-3 mb-3" [formGroup]="voucherBlock">
+        <div class="flex-grow-1">
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2 ">
+                <div>
+                    <h6 class=" fw-semibold mb-0">Voucher details</h6>
+                </div>
+                <div> Credit Total : <b class="text-success">{{ creditTotal | number:'1.2-2' }}</b> / Debit Total : <b class="text-danger">{{ debitTotal | number:'1.2-2' }}</b></div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-3">
+                <label for="voucherType" class="form-label">Voucher Type <span class="text-danger">*</span></label>
+                <select class="form-select" tabIndex="0" formControlName="voucherType" (change)="onVoucherTypeChange()" [ngClass]="{'is-invalid': voucherBlock.get('voucherType')?.invalid && (voucherBlock.get('voucherType')?.touched || voucherBlock.get('voucherType')?.dirty)}">
+                    <option [ngValue]="null">Select Voucher Type</option>
+                    <option *ngFor="let vt of voucherTypes" [ngValue]="vt.voucherType">{{ vt.voucherType }} → {{ vt.voucherDescription }}</option>
+                </select>
+                <div class="invalid-feedback d-block" *ngIf="voucherBlock.get('voucherType')?.invalid && (voucherBlock.get('voucherType')?.touched || voucherBlock.get('voucherType')?.dirty)"> Voucher Type is required. </div>
+            </div>
+            <div class="col-md-3">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="voucherSysCat" class="form-label">Vchr Category <span class="text-danger">*</span></label>
+                        <app-searchable-select tabIndex="0" formControlName="voucherSysCategory" [items]="voucherSysCategoryItems" bindValue="code" [displayWith]="simpleName" placeholder="Select Vchr Category" nullOptionLabel="Select Voucher Sys Category" [searchable]="false">
+                        </app-searchable-select>
+                        <div class="invalid-feedback d-block" *ngIf="voucherBlock.get('voucherSysCategory')?.invalid && (voucherBlock.get('voucherSysCategory')?.touched || voucherBlock.get('voucherSysCategory')?.dirty)"> Please select Vchr Category. </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="voucherDate" class="form-label">Voucher Date <span class="text-danger">*</span></label>
+                        <input type="date" tabIndex="0" id="voucherDate" class="form-control" formControlName="voucherDate" [ngClass]="{'is-invalid': voucherBlock.get('voucherDate')?.invalid && (voucherBlock.get('voucherDate')?.touched || voucherBlock.get('voucherDate')?.dirty)}">
+                        <div class="invalid-feedback d-block" *ngIf="voucherBlock.get('voucherDate')?.invalid && (voucherBlock.get('voucherDate')?.touched || voucherBlock.get('voucherDate')?.dirty)"> Voucher date is required. </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label for="narration" class="form-label">Narration</label>
+                <input type="text" tabIndex="0" id="narration" class="form-control" formControlName="narration" placeholder="Narration" [ngClass]="{'is-invalid': voucherBlock.get('narration')?.invalid && (voucherBlock.get('narration')?.touched || voucherBlock.get('narration')?.dirty)}">
+                <div class="invalid-feedback d-block" *ngIf="voucherBlock.get('narration')?.errors && (voucherBlock.get('narration')?.touched || voucherBlock.get('narration')?.dirty)"><span *ngIf="voucherBlock.get('narration')?.errors?.['maxlength']">Maximum 250 characters.</span></div>
+            </div>
+        </div>
+    </div>
+    <div class="table-responsive mb-3 bill-table">
+        <table class="table table-group align-middle mb-0">
+            <thead class="table-light sticky-header">
+                <tr>
+                    <th class="text-start">Bill No<span class="text-danger"> *</span></th>
+                    <th>Bill Amount<span class="text-danger"> *</span></th>
+                    <th>Bill Date<span class="text-danger"> *</span></th>
+                </tr>
+            </thead>
+            <tbody formArrayName="billDetails">
+                <tr *ngFor="let billDetails of billDetails.controls; let i = index" [formGroupName]="i" [ngClass]="{ 'table-secondary': billDetails.disabled }">
+                    <td class="text-start">
+                        <input tabIndex="0" type="text" class="form-control" formControlName="billNo" placeholder="Bill No" [ngClass]="{'is-invalid': getBillCtrl(i,'billNo')?.errors && billTouchedOrDirty(i,'billNo')}">
+                        <div class="invalid-feedback d-block text-left" *ngIf="getBillCtrl(i,'billNo')?.errors && billTouchedOrDirty(i,'billNo')">
+                            <span *ngIf="getBillCtrl(i,'billNo')?.errors?.['required']">Bill No is required.</span>
+                            <span *ngIf="getBillCtrl(i,'billNo')?.errors?.['maxlength']">Max 50 characters.</span>
+                        </div>
+                    </td>
+                    <td>
+                        <input type="text" tabIndex="0" class="form-control" formControlName="billAmount" placeholder="Bill Amount" inputmode="decimal" [ngClass]="{'is-invalid': getBillCtrl(i,'billAmount')?.errors && billTouchedOrDirty(i,'billAmount')}">
+                        <div class="invalid-feedback d-block" *ngIf="getBillCtrl(i,'billAmount')?.errors && billTouchedOrDirty(i,'billAmount')">
+                            <span *ngIf="getBillCtrl(i,'billAmount')?.errors?.['required']"> Required.</span>
+                            <span *ngIf="!getBillCtrl(i,'billAmount')?.errors?.['required'] && getBillCtrl(i,'billAmount')?.errors?.['pattern']"> Invalid amount.</span>
+                            <span *ngIf="!getBillCtrl(i,'billAmount')?.errors?.['required'] && !getBillCtrl(i,'billAmount')?.errors?.['pattern'] && getBillCtrl(i,'billAmount')?.errors?.['min']"> Must be > 0.</span>
+                        </div>
+                    </td>
+                    <td>
+                        <input tabIndex="0" type="date" class="form-control" formControlName="billDate" [ngClass]="{'is-invalid': getBillCtrl(i,'billDate')?.errors && billTouchedOrDirty(i,'billDate')}">
+                        <div class="invalid-feedback d-block" *ngIf="getBillCtrl(i,'billDate')?.errors && billTouchedOrDirty(i,'billDate')">
+                            <span *ngIf="getBillCtrl(i,'billDate')?.errors?.['required']">Bill date is required.</span>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="table-responsive mb-3 debit-table">
+        <table class="table table-group align-middle mb-0">
+            <thead class="table-light sticky-header">
+                <tr>
+                    <th> </th>
+                    <th>Group/Account<span class="text-danger"> *</span></th>
+                    <th>Account<span class="text-danger"> *</span></th>
+                    <th>Amount<span class="text-danger"> *</span></th>
+                    <th>Reference Date</th>
+                    <th>Reference No</th>
+                    <th>Particulars</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody formArrayName="lines">
+                <tr *ngFor="let line of lines.controls; let i = index" [formGroupName]="i" [ngClass]="{ 'table-secondary': line.disabled }">
+                    <td>
+                        <select tabIndex="0" class="form-select" formControlName="dc">
+                            <option [ngValue]="'D'">Debit</option>
+                            <option [ngValue]="'C'">Credit</option>
+                        </select>
+                    </td>
+                    <td>
+                        <app-searchable-select tabIndex="0" class="form-select" formControlName="group" [items]="groups" bindValue="accountCode" [displayWith]="groupLabel" placeholder="Select Group/Account" nullOptionLabel="Select Group/Account" [searchable]="true" (selectionChange)="onGroupChange(i)">
+                        </app-searchable-select>
+                        <div class="invalid-feedback d-block" *ngIf="getCtrl(i,'group')?.invalid && touchedOrDirty(i,'group')"> Group/Account is required. </div>
+                    </td>
+                    <td>
+                        <ng-container *ngIf="isRowLoading(i)">
+                            <span class="spinner-border spinner-border-sm text-secondary ms-2 mt-2" role="status" aria-label="Loading accounts..."></span>
+                        </ng-container>
+                        <ng-container *ngIf="!isRowLoading(i)">
+                            <ng-container *ngIf="hasSubAccounts(i); else noSubAccount">
+                                <app-searchable-select tabIndex="0" class="form-select" formControlName="account" [items]="accountsForRow(i)" bindValue="code" [displayWith]="simpleCodeName" placeholder="Select Account" nullOptionLabel="Select Account" [searchable]="true">
+                                </app-searchable-select>
+                                <div class="invalid-feedback d-block" *ngIf="getCtrl(i,'account')?.invalid && touchedOrDirty(i,'account')"> Account is required. </div>
+                            </ng-container>
+                            <ng-template #noSubAccount>
+                                <ng-container *ngIf="isCostCenterRow(i); else plainLabel">
+                                    <div class="mt-2">
+                                        <ng-container *ngIf="hasCostCenterRows(i); else ccNoRows">
+                                            <a href="javascript:void(0)" class="text-success" (click)="openCostCenterModal(i)"> View Cost Center ({{ getCostCenterRowCount(i) }}) </a>
+                                        </ng-container>
+                                    </div>
+                                    <ng-template #ccNoRows>
+                                        <span class="form-control-plaintext text-truncate" [title]="getGroupName(i)">{{ getGroupName(i) }}</span>
+                                        <a *ngIf="!line.disabled" href="javascript:void(0)" class="text-success ms-2 small" (click)="openCostCenterModal(i)">(Add)</a>
+                                    </ng-template>
+                                </ng-container>
+                                <ng-template #plainLabel>
+                                    <div class="form-control-plaintext text-truncate" [title]="getGroupName(i)"> {{ getGroupName(i) }} </div>
+                                </ng-template>
+                            </ng-template>
+                        </ng-container>
+                    </td>
+                    <td>
+                        <input type="text" tabIndex="0" class="form-control" formControlName="amount" placeholder="Amount" inputmode="decimal" [readonly]="hasCostCenterRows(i) || hasInvoiceAmount(i)" (blur)="recalculateTotals()" (keydown.enter)="addEmptyLineRowAfter(i, $event)" [ngClass]="{'is-invalid': getCtrl(i,'amount')?.invalid && touchedOrDirty(i,'amount')}">
+                        <div class="invalid-feedback d-block" *ngIf="getCtrl(i,'amount')?.errors && touchedOrDirty(i,'amount')">
+                            <span *ngIf="getCtrl(i,'amount')?.errors?.['required']"> Required.</span>
+                            <span *ngIf="!getCtrl(i,'amount')?.errors?.['required'] && getCtrl(i,'amount')?.errors?.['pattern']"> Invalid amount.</span>
+                            <span *ngIf="!getCtrl(i,'amount')?.errors?.['required'] && !getCtrl(i,'amount')?.errors?.['pattern'] && getCtrl(i,'amount')?.errors?.['min']"> Must be > 0.</span>
+                        </div>
+                    </td>
+                    <td>
+                        <input tabIndex="0" type="date" class="form-control" formControlName="receiptDate" (keydown.enter)="addEmptyLineRowAfter(i, $event)" [ngClass]="{'is-invalid': getCtrl(i,'receiptDate')?.invalid && touchedOrDirty(i,'receiptDate')}">
+                        <div class="invalid-feedback d-block" *ngIf="getCtrl(i,'receiptDate')?.invalid && touchedOrDirty(i,'receiptDate')"> Reference date is required. </div>
+                    </td>
+                    <td>
+                        <input tabIndex="0" type="text" class="form-control" formControlName="receiptNo" placeholder="Reference #" (keydown.enter)="addEmptyLineRowAfter(i, $event)" [ngClass]="{'is-invalid': getCtrl(i,'receiptNo')?.errors && touchedOrDirty(i,'receiptNo')}">
+                        <div class="invalid-feedback d-block" *ngIf="getCtrl(i,'receiptNo')?.errors && touchedOrDirty(i,'receiptNo')">
+                            <span *ngIf="getCtrl(i,'receiptNo')?.errors?.['maxlength']">Max 50 characters.</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="input-group">
+                            <input tabIndex="0" type="text" class="form-control" formControlName="particulars" placeholder="Particulars" (keydown.enter)="addEmptyLineRowAfter(i, $event)" [ngClass]="{'is-invalid': getCtrl(i,'particulars')?.errors && touchedOrDirty(i,'particulars')}">
+                        </div>
+                        <div class="invalid-feedback d-block" *ngIf="getCtrl(i,'particulars')?.errors && touchedOrDirty(i,'particulars')">
+                            <span *ngIf="getCtrl(i,'particulars')?.errors?.['maxlength']">Max 200 characters.</span>
+                        </div>
+                    </td>
+                    <td class="text-center pt-3 px-0">
+                        <i *ngIf="i === lines.length - 1" tabIndex="0" type="button" [ngClass]="{'fa': true, 'fa-plus': true, 'fs-5': true, 'me-1': true, 'greentext': !isVoucherNoGenertaed, 'text-muted icon-disabled': isVoucherNoGenertaed}" (click)="!isVoucherNoGenertaed && addEmptyLineRowAfter(i)" (keydown.enter)="addEmptyLineRowAfter(i, $event)"></i>
+                        <i *ngIf="lines.length > 1" tabIndex="0" type="button" [ngClass]="{'fa': true, 'fa-trash': true, 'fs-5': true, 'me-1': true, 'text-danger': !isVoucherNoGenertaed, 'text-muted icon-disabled': isVoucherNoGenertaed}" (click)="!isVoucherNoGenertaed && removeLine(i)" (keydown.enter)="removeLine(i)"></i>
+                        <i *ngIf="i === lines.length - 1 && isLineHasAnyValue(i)" tabIndex="0" [ngClass]="{'fa': true, 'fa-undo': true, 'fs-5': true, 'me-1': true, 'greentext': !isOnHoldNoGenerated, 'text-muted icon-disabled': isOnHoldNoGenerated}" (click)="!isOnHoldNoGenerated && resetLine(i)" (keydown.enter)="resetLine(i)"></i>
+                        <i *ngIf="getCtrl(i,'account')?.value && (getCtrl(i,'automated')?.value ?? 'N') !== 'Y'" tabIndex="0" type="button" [ngClass]="{'fa': true, 'fa-file-text': true, 'fs-5': true, 'greentext': !isOnHoldNoGenerated, 'text-muted icon-disabled': isOnHoldNoGenerated}" title="View invoices" (click)="!isOnHoldNoGenerated && openInvoicesModal(i)" (keydown.enter)="!isOnHoldNoGenerated && openInvoicesModal(i)"></i>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="row align-items-center mb-2" *ngIf="filteredVouchersList?.length">
+        <div class="col-md-7">
+            <span class="text-muted small">Showing {{ filteredVouchersList.length }} of {{ voucherList.length }} vouchers</span><small class="text-muted"> (Note: Max 50 records at a time.) </small>
+        </div>
+        <div class="col-md-5 d-flex gap-2">
+            <input type="text" class="form-control" [(ngModel)]="searchText" [ngModelOptions]="{standalone: true}" placeholder="Search..." />
+            <button class="btn btn-primary" (click)="searchText = ''">Clear</button>
+            <button class="btn btn-primary" style="width: 120px;" (click)="onBulkPost()" [disabled]="isLoading">Bulk Post</button>
+        </div>
+    </div>
+    <div class="table-responsive voucher-detail-table mb-3">
+        <table *ngIf="filteredVouchersList?.length" class="table table-hover align-middle table-fixed" width="100%">
+            <thead class="table-light sticky-header">
+                <tr>
+                    <th style="width:30px"><input type="checkbox" [(ngModel)]="selectVouchersAll" [ngModelOptions]="{standalone: true}" (change)="onVCheckAll($event, filteredVouchersList)"></th>
+                    <th (click)="sortTable('ctrlOnHoldNo', 'voucher')" style="cursor:pointer;"> OnHold No <i *ngIf="sortColumn === 'ctrlOnHoldNo'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i>
+                    </th>
+                    <th (click)="sortTable('vchrNumber', 'voucher')" style="cursor:pointer;"> Voucher No <i *ngIf="sortColumn === 'vchrNumber'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i>
+                    </th>
+                    <th (click)="sortTable('billNumber', 'voucher')" style="cursor:pointer;"> Bill No <i *ngIf="sortColumn === 'billNumber'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i>
+                    </th>
+                    <th (click)="sortTable('billDate', 'voucher')" style="cursor:pointer;"> Voucher Date <i *ngIf="sortColumn === 'billDate' && activeSortType==='voucher'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i>
+                    </th>
+                    <th class="text-end" (click)="sortTable('billAmount', 'voucher')" style="cursor:pointer;"> Total Amount <i *ngIf="sortColumn === 'billAmount'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i>
+                    </th>
+                    <th (click)="sortTable('bankCode', 'voucher')" style="cursor:pointer;"> Bank Details <i *ngIf="sortColumn === 'bankCode'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i>
+                    </th>
+                    <th (click)="sortTable('vchrNarration', 'voucher')" style="cursor:pointer;"> Voucher Narration <i *ngIf="sortColumn === 'vchrNarration'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let item of filteredVouchersList; let i = index">
+                    <td><input [disabled]="item.vchrNumber" type="checkbox" [checked]="item.selected" (change)="onRowCheckboxChange($event, item, filteredVouchersList)"></td>
+                    <td>
+                        <a href="#" (click)="onVoucherRowClick(item); $event.preventDefault()"> {{ item.ctrlOnHoldNo || '' }} </a>
+                    </td>
+                    <td>{{ item.vchrNumber || '' }}</td>
+                    <td>{{ item.billNumber || '' }}</td>
+                    <td>{{ item.billDate | date:'dd/MM/yyyy' }}</td>
+                    <td class="text-end">{{ (item.billAmount || 0) | number:'1.2-2' }}</td>
+                    <td> {{ item.bankCode && item.description ? item.bankCode + ' → ' + item.description : (item.bankCode || item.description || '') }}</td>
+                    <td>{{ item.vchrNarration || '' }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="bglightgreen p-3 mb-3" [formGroup]="importBlockForm" *ngIf="header?.get('month')?.value">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="row align-items-center">
+            <label for="importType" class="form-label col-auto mb-0"> Import Type <span class="text-danger">*</span> </label>
+            <div class="col-auto d-flex align-items-center gap-3">
+                <select id="importType" class="form-select py-1 ps-2" style="width:180px;" formControlName="importType" (change)="onImportTypeChange()">
+                    <option value="0">Select</option>
+                    <option value="1">Domestic</option>
+                    <option value="2">Export</option>
+                </select>
+                <small class="text-muted" *ngIf="+currentImportType > 0"> Note: Max 50 records at a time. </small>
+            </div>
+        </div>
+        <div>
+            <button *ngIf="currentImportType === '1'" class="btn btn-success" (click)="importSelectedDomesticToBills()">Import Selected Domestic → Bills</button>
+            <button *ngIf="currentImportType === '2'" class="btn btn-success" (click)="importSelectedExportToBills()">Import Selected Export → Bills</button>
+        </div>
+    </div>
+    <div *ngIf="currentImportType === '1'" class="table-responsive domestic-table">
+        <table class="table table-hover align-middle table-fixed" width="100%">
+            <thead class="table-light sticky-header">
+                <tr>
+                    <th style="width:30px">
+                        <input type="checkbox" [(ngModel)]="selectAll" [ngModelOptions]="{standalone: true}" (change)="onCheckAll($event, domesticList)">
+                    </th>
+                    <th (click)="sortTable('invoiceNo', 'domestic')" style="cursor:pointer;">Invoice No <i *ngIf="sortColumn === 'invoiceNo' && activeSortType==='domestic'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i></th>
+                    <th (click)="sortTable('invoiceDate', 'domestic')" style="cursor:pointer;">Invoice Date <i *ngIf="sortColumn === 'invoiceDate'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i></th>
+                    <th (click)="sortTable('customerCode', 'domestic')" style="cursor:pointer;">Customer Code <i *ngIf="sortColumn === 'customerCode'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i></th>
+                    <th (click)="sortTable('customerName', 'domestic')" style="cursor:pointer;">Customer Name <i *ngIf="sortColumn === 'customerName'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let d of domesticList" [class.table-danger]="!d.isValid">
+                    <td><i *ngIf="!d.isValid" class="fa fa-exclamation-triangle text-danger" [title]="d.validationMessage"></i>
+                        <input *ngIf="d.isValid" type="checkbox" [checked]="d.selected" (change)="onRowCheckboxChange($event, d, domesticList)">
+                    </td>
+                    <td>{{ d.invoiceNo }}</td>
+                    <td>{{ d.invoiceDate | date:'dd/MM/yyyy' }}</td>
+                    <td>{{ d.customerCode }}</td>
+                    <td>{{ d.customerName }}</td>
+                </tr>
+                <tr *ngIf="!domesticList.length">
+                    <td colspan="5" class="text-center">No records</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div *ngIf="currentImportType === '2'" class="table-responsive export-table">
+        <table class="table table-hover align-middle table-fixed" width="100%">
+            <thead class="table-light sticky-header">
+                <tr>
+                    <th style="width:30px">
+                        <input type="checkbox" [(ngModel)]="selectAll" [ngModelOptions]="{standalone: true}" (change)="onCheckAll($event, exportList)">
+                    </th>
+                    <th (click)="sortTable('invoiceNo', 'export')" style="cursor:pointer;">Invoice No <i *ngIf="sortColumn === 'invoiceNo' && activeSortType==='export'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i></th>
+                    <th (click)="sortTable('invoiceDate', 'export')" style="cursor:pointer;">Invoice Date <i *ngIf="sortColumn === 'invoiceDate'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i></th>
+                    <th (click)="sortTable('customerCode', 'export')" style="cursor:pointer;">Customer Code <i *ngIf="sortColumn === 'customerCode'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i></th>
+                    <th (click)="sortTable('customerName', 'export')" style="cursor:pointer;">Customer Name <i *ngIf="sortColumn === 'customerName'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let e of exportList" [class.table-danger]="!e.isValid">
+                    <td><i *ngIf="!e.isValid" class="fa fa-exclamation-triangle text-danger" [title]="e.validationMessage"></i>
+                        <input *ngIf="e.isValid" type="checkbox" [checked]="e.selected" (change)="onRowCheckboxChange($event, e, exportList)">
+                    </td>
+                    <td>{{ e.invoiceNo }}</td>
+                    <td>{{ e.invoiceDate | date:'dd/MM/yyyy' }}</td>
+                    <td>{{ e.customerCode }}</td>
+                    <td>{{ e.customerName }}</td>
+                </tr>
+                <tr *ngIf="!exportList.length">
+                    <td colspan="5" class="text-center">No records</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<div #costCenterModal class="modal fade" id="costCenterDetails" aria-hidden="true" aria-labelledby="InviteLabel" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title fs-5">Cost Center Details</h6>
+            </div>
+            <div class="modal-body">
+                <form [formGroup]="costCenterForm">
+                    <div formArrayName="rows" class="table-responsive" style="height:60vh; max-height:60vh; overflow:auto;">
+                        <table class="table table-borderless costCenter-table mb-0">
+                            <thead class="table-light sticky-header">
+                                <tr>
+                                    <th class="text-left">Cost Center Code<span class="text-danger"> *</span></th>
+                                    <th>Amount<span class="text-danger"> *</span></th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let row of costCenterRows.controls; let i = index" [formGroupName]="i" class="align-middle">
+                                    <td class="text-start">
+                                        <app-searchable-select tabIndex="0" class="form-select" formControlName="costCenter" [items]="accounts" bindValue="code" [displayWith]="ccLabel" placeholder="Select Account" nullOptionLabel="Select Account" [searchable]="true">
+                                        </app-searchable-select>
+                                        <div class="invalid-feedback d-block" *ngIf="costCenterInvalid(i,'costCenter')"> Cost center is required. </div>
+                                    </td>
+                                    <td class="col-4">
+                                        <input type="text" tabIndex="0" class="form-control" formControlName="amount" placeholder="Enter Amount" inputmode="decimal" [ngClass]="{'is-invalid': costCenterInvalid(i,'amount')}" (keydown.enter)="addEmptyCostCenterRowAfter(i)">
+                                        <div class="invalid-feedback d-block" *ngIf="costCenterCtrl(i,'amount')?.errors && (costCenterCtrl(i,'amount')?.touched || costCenterCtrl(i,'amount')?.dirty)">
+                                            <span *ngIf="costCenterCtrl(i,'amount')?.errors?.['required']"> Required.</span>
+                                            <span *ngIf="!costCenterCtrl(i,'amount')?.errors?.['required'] && costCenterCtrl(i,'amount')?.errors?.['pattern']"> Invalid amount.</span>
+                                            <span *ngIf="!costCenterCtrl(i,'amount')?.errors?.['required'] && !costCenterCtrl(i,'amount')?.errors?.['pattern'] && costCenterCtrl(i,'amount')?.errors?.['min']"> Must be > 0. </span>
+                                        </div>
+                                    </td>
+                                    <td class="text-center pt-3">
+                                        <i *ngIf="i === costCenterRows.length - 1" tabIndex="0" type="button" title="Add new row" (keydown.enter)="addEmptyCostCenterRowAfter(i)" (click)="addEmptyCostCenterRowAfter(i)" class="fa fa-plus greentext fs-5 me-2" aria-hidden="true"></i>
+                                        <i *ngIf="costCenterRows.length > 1" tabIndex="0" type="button" title="Remove row" (keydown.enter)="removeCostCenterRow(i)" (click)="removeCostCenterRow(i)" class="text-danger fa fa-trash fs-5 me-2" aria-hidden="true"></i>
+                                        <i *ngIf="i === costCenterRows.length - 1 && isCostCenterRowHasAnyValue(i)" tabIndex="0" class="fa fa-undo greentext fs-5" style="cursor: pointer;" title="Reset this row" (keydown.enter)="resetCostCenterRow(i)" (click)="resetCostCenterRow(i)"></i>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer pb-0">
+                        <!-- <button type="button" tabIndex="0" class="btn btn-success" (click)="okCostCenterModal()">Ok</button> -->
+                        <button type="button" tabIndex="0" class="btn btn-success" (click)="saveCostCenterDetails()" (keydown.enter)="saveCostCenterDetails()">Save</button>
+                        <button type="button" tabIndex="0" class="btn btn-primary" (click)="cancelCostCenterModal()" (keydown.enter)="cancelCostCenterModal()">Clear</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div #invoiceModal class="modal fade" id="invoiceDetails" aria-hidden="true" aria-labelledby="InvoiceLabel" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title">Invoices</h6>
+            </div>
+            <div class="modal-body">
+                <div *ngIf="modalInvoiceRows?.length; else noInv">
+                    <div class="table-responsive" style="height:60vh; max-height:60vh; overflow:auto;">
+                        <table class="table table-hover align-middle table-fixed">
+                            <thead class="table-light sticky-header">
+                                <tr>
+                                    <th>Voucher No</th>
+                                    <th>Bill No</th>
+                                    <th>Bill Date</th>
+                                    <th class="text-end">Bill Balance</th>
+                                    <th class="text-end">Accepted</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let inv of modalInvoiceRows; let j = index">
+                                    <td>{{inv.voucherNo}}</td>
+                                    <td>{{inv.billNo}}</td>
+                                    <td>{{inv.billDate | date:'dd/MM/yyyy'}}</td>
+                                    <td class="text-end">{{ inv.billBalance | number:'1.2-2' }}</td>
+                                    <td class="text-end" style="width:140px">
+                                        <input type="text" class="form-control form-control-sm" [value]="inv.acceptedAmount==null ? '' : inv.acceptedAmount" (input)="onInvoiceInputChange($event, inv)" (blur)="onInvoiceAcceptedBlur(inv)" />
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-2 d-flex justify-content-between">
+                        <div><b>Total Accepted : {{ modalTotalAccepted | number:'1.2-2' }}</b></div>
+                        <div>
+                            <button type="button" tabIndex="0" class="btn btn-success me-2" (click)="saveInvoicesFromModal()" (keydown.enter)="saveInvoicesFromModal()">Save</button>
+                            <button type="button" tabIndex="0" class="btn btn-primary" (click)="showhideInvoiceModal(false)" (keydown.enter)="showhideInvoiceModal(false)">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+                <ng-template #noInv>
+                    <div class="text-center text-muted">No Invoices found for this Account.</div>
+                </ng-template>
+            </div>
+        </div>
+    </div>
+</div>
+<div *ngIf="isLoading" class="spinner-overlay">
+    <div class="spinner"></div>
+</div>

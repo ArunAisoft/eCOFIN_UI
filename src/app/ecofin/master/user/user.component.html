@@ -1,0 +1,87 @@
+<div class="p-3">
+  <form [formGroup]="userForm" novalidate>
+    <div class="bglightgreen p-3 mb-3">
+      <div class="flex-grow-1">
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+          <h6 class="fw-semibold mb-0">User Details</h6>
+        </div>
+      </div>
+      <div class="row mb-3">
+        <div class="col-md-3">
+          <label class="form-label">Username <span class="text-danger">*</span></label>
+          <input class="form-control" formControlName="username" placeholder="Username" [ngClass]="{'is-invalid': isInvalid('username')}" />
+          <div class="invalid-feedback d-block" *ngIf="hasError('username','required')">Username is required.</div>
+          <div class="invalid-feedback d-block" *ngIf="hasError('username','maxlength')">Max 30 characters.</div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Full Name <span class="text-danger">*</span></label>
+          <input class="form-control" formControlName="nameDescription" placeholder="Full Name" [ngClass]="{'is-invalid': isInvalid('nameDescription')}" />
+          <div class="invalid-feedback d-block" *ngIf="hasError('nameDescription','required')">Full Name is required.</div>
+          <div class="invalid-feedback d-block" *ngIf="hasError('nameDescription','maxlength')">Max 100 characters.</div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">User Status <span class="text-danger">*</span></label>
+          <select class="form-select" formControlName="objectStatus" [ngClass]="{'is-invalid': isInvalid('objectStatus')}">
+            <option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</option>
+          </select>
+          <div class="invalid-feedback d-block" *ngIf="hasError('objectStatus','required')">Status is required.</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-3">
+          <label class="form-label">Password <span class="text-danger">*</span></label>
+          <input class="form-control" type="password" formControlName="password" placeholder="Password (numbers only)" [ngClass]="{'is-invalid': isInvalid('password')}" />
+          <div class="invalid-feedback d-block" *ngIf="hasError('password','required')">Password is required.</div>
+          <div class="invalid-feedback d-block" *ngIf="hasError('password','pattern')">Password must be numeric only.</div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
+          <input class="form-control" type="password" formControlName="confirmPassword" placeholder="Confirm Password" [ngClass]="{'is-invalid': isInvalid('confirmPassword')}" />
+          <div class="invalid-feedback d-block" *ngIf="hasError('confirmPassword','required')">Confirm Password is required.</div>
+          <div class="invalid-feedback d-block" *ngIf="hasError('confirmPassword','mismatch')">Passwords do not match.</div>
+        </div>
+        <div class="col-md-6 mt-4 d-flex justify-content-end gap-2">
+          <button tabIndex="0" type="button" class="btn btn-primary" style="width: 80px;" (click)="onClear()" (keydown.enter)="onClear()">New</button>
+          <button tabIndex="0" type="button" class="btn btn-success" style="width: 80px;" (click)="onSave()" (keydown.enter)="onSave()"> {{ isEditMode ? 'Update' : 'Save' }} </button>
+        </div>
+      </div>
+    </div>
+  </form>
+  <div class="row align-items-center mb-2">
+    <div class="col-md-9">
+      <span class="text-muted small">Showing {{ filteredUserList.length }} of {{ userList.length }} users</span>
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+      <input type="text" class="form-control" [(ngModel)]="searchText" [ngModelOptions]="{standalone: true}" placeholder="Search..." />
+      <button class="btn btn-primary" (click)="searchText = ''">Clear</button>
+    </div>
+  </div>
+  <div class="table-responsive mb-3" style="height:80vh; max-height:80vh; overflow:auto;">
+    <table class="table table-borderless mb-0">
+      <thead class="table-light sticky-header">
+        <tr>
+          <th style="text-align:left; width:5%;">#</th>
+          <th style="text-align:left; width:25%;">Username</th>
+          <th style="text-align:left; width:50%;">Full Name</th>
+          <th style="text-align:left; width:20%;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of filteredUserList; let i = index" [class.table-warning]="isEditMode && row.username === editingCode">
+          <td class="align-middle text-start;">{{ i + 1 }}</td>
+          <td style="text-align:left; cursor:pointer;">
+            <a href="#" (click)="startEdit(row); $event.preventDefault()">{{ row.username }} </a>
+          </td>
+          <td class="align-middle text-start;">{{ row.nameDescription }}</td>
+          <td class="align-middle text-start;">{{ statusLabel(row.objectStatus) }}</td>
+        </tr>
+        <tr *ngIf="filteredUserList.length === 0">
+          <td colspan="4" class="text-center text-muted py-3">No users found.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<div *ngIf="isLoading" class="spinner-overlay">
+  <div class="spinner"></div>
+</div>

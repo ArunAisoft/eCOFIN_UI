@@ -1,0 +1,90 @@
+mark {
+    background-color: rgba(78, 170, 57, 0.1) !important;
+    padding: 0 3px;
+    border-radius: 3px;
+}
+
+:host ::ng-deep mark {
+    background-color: rgba(78, 170, 57, 0.1) !important;
+    padding: 0 3px;
+    border-radius: 3px;
+}
+
+.breadcrumb {
+    background: transparent;
+    font-weight: 500;
+}
+
+.breadcrumb a {
+    text-decoration: none;
+    color: #0d6efd;
+}
+
+.breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+.trial-balance-table th:nth-child(1),
+.trial-balance-table td:nth-child(1) { width: 20%; }
+.trial-balance-table th:nth-child(2),
+.trial-balance-table td:nth-child(2) { width: 40%; }
+.trial-balance-table th:nth-child(3),
+.trial-balance-table td:nth-child(3) { width: 20%; }
+.trial-balance-table th:nth-child(4),
+.trial-balance-table td:nth-child(4) { width: 20%; }
+
+.gl-details-table th:nth-child(1),
+.gl-details-table td:nth-child(1) { width: 12%; }
+.gl-details-table th:nth-child(2),
+.gl-details-table td:nth-child(2) { width: 12%; }
+.gl-details-table th:nth-child(3),
+.gl-details-table td:nth-child(3) { width: 12%; }
+.gl-details-table th:nth-child(4),
+.gl-details-table td:nth-child(4) { width: 12%; }
+.gl-details-table th:nth-child(5),
+.gl-details-table td:nth-child(5) { width: 12%; }
+.gl-details-table th:nth-child(6),
+.gl-details-table td:nth-child(6) { width: 40%; }
+
+.subledger-schedule-table th:nth-child(1),
+.subledger-schedule-table td:nth-child(1) { width: 15%; }
+.subledger-schedule-table th:nth-child(2),
+.subledger-schedule-table td:nth-child(2) { width: 20%; }
+.subledger-schedule-table th:nth-child(3),
+.subledger-schedule-table td:nth-child(3) { width: 15%; }
+.subledger-schedule-table th:nth-child(4),
+.subledger-schedule-table td:nth-child(4) { width: 25%; }
+.subledger-schedule-table th:nth-child(5),
+.subledger-schedule-table td:nth-child(5) { width: 12.5%; }
+.subledger-schedule-table th:nth-child(6),
+.subledger-schedule-table td:nth-child(6) { width: 12.5%; }
+
+.subledger-account-table th:nth-child(1),
+.subledger-account-table td:nth-child(1) { width: 20%; }
+.subledger-account-table th:nth-child(2),
+.subledger-account-table td:nth-child(2) { width: 15%; }
+.subledger-account-table th:nth-child(3),
+.subledger-account-table td:nth-child(3) { width: 20%; }
+.subledger-account-table th:nth-child(4),
+.subledger-account-table td:nth-child(4) { width: 25%; }
+.subledger-account-table th:nth-child(5),
+.subledger-account-table td:nth-child(5) { width: 10%; }
+.subledger-account-table th:nth-child(6),
+.subledger-account-table td:nth-child(6) { width: 10%; }
+
+.bills-payments-table th:nth-child(1),
+.bills-payments-table td:nth-child(1) { width: 15%; }
+.bills-payments-table th:nth-child(2),
+.bills-payments-table td:nth-child(2) { width: 15%; }
+.bills-payments-table th:nth-child(3),
+.bills-payments-table td:nth-child(3) { width: 15%; }
+.bills-payments-table th:nth-child(4),
+.bills-payments-table td:nth-child(4) { width: 15%; }
+.bills-payments-table th:nth-child(5),
+.bills-payments-table td:nth-child(5) { width: 20%; }
+.bills-payments-table th:nth-child(6),
+.bills-payments-table td:nth-child(6) { width: 18%; }
+.bills-payments-table th:nth-child(7),
+.bills-payments-table td:nth-child(7) { width: 18%; }
+.bills-payments-table th:nth-child(8),
+.bills-payments-table td:nth-child(8) { width: 24%; }

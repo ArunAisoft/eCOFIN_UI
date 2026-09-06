@@ -1,0 +1,98 @@
+<div class="p-3">
+  <form [formGroup]="form">
+    <div class="table-responsive mb-3" style="height:78vh; max-height:78vh; overflow:auto;">
+      <table class="table table-borderless mb-0">
+        <thead class="table-light sticky-header">
+          <tr>
+            <th style="text-align:left; width:10%;">Code <span class="text-danger">*</span></th>
+            <th style="text-align:left; width:35%;">Name <span class="text-danger">*</span></th>
+            <th style="text-align:left; width:27%;">Country</th>
+            <th style="text-align:left; width:8%;">Symbol</th>
+            <th style="text-align:left; width:12%;">Status <span class="text-danger">*</span></th>
+            <th style="text-align:left; width:8%;">Action</th>
+          </tr>
+        </thead>
+        <tbody formArrayName="currencies">
+          <tr *ngFor="let row of currencies.controls; let i = index" [formGroupName]="i">
+            <ng-container *ngIf="row.get('isNew')?.value">
+              <td style="text-align:left;">
+                <input class="form-control form-control-sm" formControlName="currencyCode" placeholder="e.g. USD" [ngClass]="{ 'is-invalid': isRowInvalid(row, 'currencyCode') }" />
+                <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'currencyCode', 'required')"> Code is required. </div>
+                <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'currencyCode', 'maxlength')"> Max 5 characters. </div>
+              </td>
+              <td style="text-align:left;">
+                <input class="form-control form-control-sm" formControlName="currencyName" placeholder="Currency name" [ngClass]="{ 'is-invalid': isRowInvalid(row, 'currencyName') }" />
+                <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'currencyName', 'required')"> Name is required. </div>
+                <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'currencyName', 'maxlength')"> Max 50 characters. </div>
+              </td>
+              <td style="text-align:left;">
+                <input class="form-control form-control-sm" formControlName="country" placeholder="Country" [ngClass]="{ 'is-invalid': isRowInvalid(row, 'country') }" />
+                <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'country', 'maxlength')"> Max 50 characters. </div>
+              </td>
+              <td style="text-align:left;">
+                <input class="form-control form-control-sm" formControlName="symbol" placeholder="$" [ngClass]="{ 'is-invalid': isRowInvalid(row, 'symbol') }" />
+                <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'symbol', 'maxlength')"> Max 5 characters. </div>
+              </td>
+              <td style="text-align:left;">
+                <select class="form-select form-select-sm" formControlName="objectStatus" [ngClass]="{ 'is-invalid': isRowInvalid(row, 'objectStatus') }">
+                  <option *ngFor="let s of statusOptions" [value]="s.value"> {{ s.label }} </option>
+                </select>
+                <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'objectStatus', 'required')"> Status is required. </div>
+              </td>
+              <td style="text-align:left;">
+                <i class="fa fa-save fs-5 me-2 text-success" style="cursor: pointer;" title="Save" (click)="saveNewRow(i)"></i>
+                <i class="fa fa-times-circle fs-5 text-danger" style="cursor: pointer;" title="Clear" (click)="clearNewRow(i)"></i>
+              </td>
+            </ng-container>
+            <ng-container *ngIf="!row.get('isNew')?.value">
+              <td style="text-align:left;"><strong>{{ row.get('currencyCode')?.value }}</strong></td>
+              <td style="text-align:left;">
+                <span *ngIf="!row.get('isEdit')?.value"> {{ row.get('currencyName')?.value }} </span>
+                <ng-container *ngIf="row.get('isEdit')?.value">
+                  <input class="form-control form-control-sm" formControlName="currencyName" [ngClass]="{ 'is-invalid': isRowInvalid(row, 'currencyName') }" />
+                  <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'currencyName', 'required')"> Name is required. </div>
+                  <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'currencyName', 'maxlength')"> Max 50 characters. </div>
+                </ng-container>
+              </td>
+              <td style="text-align:left;">
+                <span *ngIf="!row.get('isEdit')?.value"> {{ row.get('country')?.value }} </span>
+                <ng-container *ngIf="row.get('isEdit')?.value">
+                  <input class="form-control form-control-sm" formControlName="country" [ngClass]="{ 'is-invalid': isRowInvalid(row, 'country') }" />
+                  <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'country', 'maxlength')"> Max 50 characters. </div>
+                </ng-container>
+              </td>
+              <td style="text-align:left;">
+                <span *ngIf="!row.get('isEdit')?.value"> {{ row.get('symbol')?.value }} </span>
+                <ng-container *ngIf="row.get('isEdit')?.value">
+                  <input class="form-control form-control-sm" formControlName="symbol" [ngClass]="{ 'is-invalid': isRowInvalid(row, 'symbol') }" />
+                  <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'symbol', 'maxlength')"> Max 5 characters. </div>
+                </ng-container>
+              </td>
+              <td style="text-align:left;">
+                <span *ngIf="!row.get('isEdit')?.value"> {{ statusLabel(row.get('objectStatus')?.value) }} </span>
+                <ng-container *ngIf="row.get('isEdit')?.value">
+                  <select class="form-select form-select-sm" formControlName="objectStatus" [ngClass]="{ 'is-invalid': isRowInvalid(row, 'objectStatus') }">
+                    <option *ngFor="let s of statusOptions" [value]="s.value"> {{ s.label }} </option>
+                  </select>
+                  <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'objectStatus', 'required')"> Status is required. </div>
+                </ng-container>
+              </td>
+              <td style="text-align:left;">
+                <ng-container *ngIf="!row.get('isEdit')?.value">
+                  <i class="fa fa-pencil fs-5 text-success" style="cursor: pointer;" title="Edit" (click)="startEdit(i)"></i>
+                </ng-container>
+                <ng-container *ngIf="row.get('isEdit')?.value">
+                  <i class="fa fa-check fs-5 text-success me-2" style="cursor: pointer;" title="Update" (click)="updateRow(i)"></i>
+                  <i class="fa fa-times fs-5 text-danger" style="cursor: pointer;" title="Cancel" (click)="cancelEdit(i)"></i>
+                </ng-container>
+              </td>
+            </ng-container>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </form>
+</div>
+<div *ngIf="isLoading" class="spinner-overlay">
+  <div class="spinner"></div>
+</div>

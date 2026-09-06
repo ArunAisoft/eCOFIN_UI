@@ -1,0 +1,45 @@
+<div class="ss-container" #container>
+    <!-- Trigger -->
+    <div class="ss-control d-flex align-items-center gap-1" [class.disabled]="isDisabled" [class.open]="dropdownOpen" [class.is-invalid]="invalid" (click)="toggle()">
+        <!-- Pills or placeholder -->
+        <div class="ss-pills-wrap d-flex flex-wrap gap-1 flex-grow-1">
+            <ng-container *ngIf="_value.length === 0">
+                <span class="ss-placeholder">{{ placeholder }}</span>
+            </ng-container>
+            <ng-container *ngIf="_value.length > 0 && _value.length <= maxDisplayCount">
+                <span class="ss-pill" *ngFor="let val of _value" (click)="removeItem(val, $event)"> {{ getLabelByValue(val) }} <span class="ss-pill-x">&#x2715;</span>
+                </span>
+            </ng-container>
+            <ng-container *ngIf="_value.length > maxDisplayCount">
+                <span class="ss-pill ss-pill-count"> {{ _value.length }} selected </span>
+            </ng-container>
+        </div>
+        <!-- Right icons -->
+        <div class="d-flex align-items-center gap-1 ms-1 flex-shrink-0">
+            <span class="ss-clear" *ngIf="_value.length > 0" (click)="clearAll($event)" title="Clear all">&#x2715;</span>
+            <span class="ss-caret">&#9662;</span>
+        </div>
+    </div>
+    <!-- Dropdown Panel -->
+    <div class="ss-panel" *ngIf="dropdownOpen" [ngClass]="panelPositionClass">
+        <!-- Search -->
+        <div class="ss-search-wrap p-2">
+            <input #searchInput type="text" class="form-control form-control-sm" placeholder="Search..." [(ngModel)]="search" (ngModelChange)="onSearchChange($event)" (click)="$event.stopPropagation()" [disabled]="isDisabled" />
+        </div>
+        <!-- Select All row -->
+        <div class="ss-select-all d-flex align-items-center gap-2 py-2" (click)="toggleAll(); $event.stopPropagation()">
+            <input type="checkbox" class="ss-checkbox" [checked]="allSelected" [indeterminate]="someSelected" (click)="$event.stopPropagation()" (change)="toggleAll()" />
+            <span class="ss-select-all-label">Select All</span>
+            <span class="ss-count-badge ms-auto" *ngIf="_value.length > 0"> {{ _value.length }} / {{ items.length }} </span>
+        </div>
+        <div class="ss-divider"></div>
+        <!-- Options list -->
+        <div class="ss-list">
+            <div *ngFor="let it of filtered; let i = index; trackBy: trackByIndex" class="ss-item d-flex align-items-center gap-2" [class.selected]="isSelected(it)" [class.highlight]="i === highlightedIndex" (click)="toggleItem(it); $event.stopPropagation()">
+                <input type="checkbox" class="ss-checkbox" [checked]="isSelected(it)" (click)="$event.stopPropagation()" (change)="toggleItem(it)" />
+                <span class="ss-item-label">{{ getLabel(it) }}</span>
+            </div>
+            <div *ngIf="!filtered.length" class="text-muted p-2 text-center small"> No results found </div>
+        </div>
+    </div>
+</div>

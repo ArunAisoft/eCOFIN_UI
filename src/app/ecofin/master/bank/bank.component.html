@@ -1,0 +1,126 @@
+<div class="p-3">
+    <form [formGroup]="bankForm" novalidate>
+        <div class="bglightgreen p-3 mb-3">
+            <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                    <h6 class="fw-semibold mb-0">Bank Details</h6>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label class="form-label">Bank Code <span class="text-danger">*</span></label>
+                    <input class="form-control" formControlName="bankCode" placeholder="Bank Code" [ngClass]="{'is-invalid': isInvalid('bankCode')}" />
+                    <div class="invalid-feedback d-block" *ngIf="hasError('bankCode','required')">Bank Code is required.</div>
+                    <div class="invalid-feedback d-block" *ngIf="hasError('bankCode','maxlength')">Max 20 characters.</div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Bank Name <span class="text-danger">*</span></label>
+                    <input class="form-control" formControlName="name" placeholder="Bank Name" [ngClass]="{'is-invalid': isInvalid('name')}" />
+                    <div class="invalid-feedback d-block" *ngIf="hasError('name','required')">Bank Name is required.</div>
+                    <div class="invalid-feedback d-block" *ngIf="hasError('name','maxlength')">Max 100 characters.</div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Bank Status <span class="text-danger">*</span></label>
+                    <select class="form-select" formControlName="objectStatus" [ngClass]="{'is-invalid': isInvalid('objectStatus')}">
+                        <option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</option>
+                    </select>
+                    <div class="invalid-feedback d-block" *ngIf="hasError('objectStatus','required')">Status is required.</div>
+                </div>
+            </div>
+        </div>
+        <div class="bglightgreen p-3 mb-3">
+            <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                    <h6 class="fw-semibold mb-0">Address</h6>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label class="form-label">Address Line 1</label>
+                    <input class="form-control" formControlName="addrLine1" placeholder="Address Line 1" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Address Line 2</label>
+                    <input class="form-control" formControlName="addrLine2" placeholder="Address Line 2" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Address Line 3</label>
+                    <input class="form-control" formControlName="addrLine3" placeholder="Address Line 3" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Address Line 4</label>
+                    <input class="form-control" formControlName="addrLine4" placeholder="Address Line 4" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    <label class="form-label">City</label>
+                    <input class="form-control" formControlName="addrCity" placeholder="City" />
+                </div>
+                <div class="col-md-3">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">PIN Code</label>
+                            <input class="form-control" formControlName="addrPin" placeholder="PIN" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">State</label>
+                            <input class="form-control" formControlName="addrState" placeholder="State" />
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Country</label>
+                    <input class="form-control" formControlName="addrCountry" placeholder="Country" />
+                </div>
+                <div class="col-md-3 mt-4 d-flex justify-content-end gap-2">
+                    <button tabIndex="0" type="button" class="btn btn-primary" style="width: 80px;" (click)="onClear()" (keydown.enter)="onClear()">New</button>
+                    <button tabIndex="0" type="button" class="btn btn-success" style="width: 80px;" (click)="onSave()" (keydown.enter)="onSave()"> {{ isEditMode ? 'Update' : 'Save' }} </button>
+                </div>
+            </div>
+        </div>
+    </form>
+    <div class="row align-items-center mb-2">
+        <div class="col-md-9">
+            <span class="text-muted small">Showing {{ filteredBankList.length }} of {{ bankList.length }} banks</span>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <input type="text" class="form-control" [(ngModel)]="searchText" [ngModelOptions]="{standalone: true}" placeholder="Search..." />
+            <button class="btn btn-primary" (click)="searchText = ''">Clear</button>
+        </div>
+    </div>
+    <div class="table-responsive mb-3" style="height:80vh; max-height:80vh; overflow:auto;">
+        <table class="table table-borderless mb-0">
+            <thead class="table-light sticky-header">
+                <tr>
+                    <th style="text-align:left; width:10%;">Bank Code</th>
+                    <th style="text-align:left; width:25%;">Bank Name</th>
+                    <th style="text-align:left; width:25%;">Address</th>
+                    <th style="text-align:left; width:12%;">City</th>
+                    <th style="text-align:left; width:12%;">State</th>
+                    <th style="text-align:left; width:8%;">Country</th>
+                    <th style="text-align:left; width:8%;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let row of filteredBankList" [class.table-warning]="isEditMode && row.bankCode === editingCode">
+                    <td style="text-align:left; cursor:pointer;">
+                        <a href="#" (click)="startEdit(row); $event.preventDefault()">{{ row.bankCode }} </a>
+                    </td>
+                    <td class="align-middle text-start;">{{ row.name }}</td>
+                    <td class="align-middle text-start;">{{ row.addrLine1 }} {{ row.addrLine2 }}</td>
+                    <td class="align-middle text-start;">{{ row.addrCity }}</td>
+                    <td class="align-middle text-start;">{{ row.addrState }}</td>
+                    <td class="align-middle text-start;">{{ row.addrCountry }}</td>
+                    <td class="align-middle text-start;">{{ statusLabel(row.objectStatus) }}</td>
+                </tr>
+                <tr *ngIf="filteredBankList.length === 0">
+                    <td colspan="7" class="text-center text-muted py-3">No banks found.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<div *ngIf="isLoading" class="spinner-overlay">
+    <div class="spinner"></div>
+</div>

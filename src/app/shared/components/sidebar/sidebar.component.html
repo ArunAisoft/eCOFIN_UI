@@ -1,0 +1,122 @@
+<div class="sidebar">
+  <ul class="nav flex-column">
+    <!-- Dashboard -->
+    <li class="nav-item">
+      <a routerLink="/dashboard" routerLinkActive="active" class="nav-link" (click)="setMenuTitle('Dashboard')">
+        <i class="bi bi-house-door ps-2 pe-2"></i> Dashboard </a>
+    </li>
+    <!-- Voucher Entry -->
+    <li class="nav-item">
+      <a class="nav-link d-flex justify-content-between align-items-center" (click)="toggleMenu('voucher')" role="button">
+        <span><i class="bi bi-receipt ps-2 pe-1"></i> Voucher Entry</span>
+        <i class="bi bi-chevron-down small" [class.rotate]="isOpen('voucher')"></i>
+      </a>
+      <div class="submenu" [class.show]="isOpen('voucher')">
+        <ul class="nav flex-column">
+          <li><a routerLink="/voucher/bankreceipts" routerLinkActive="active"   class="nav-link"  (click)="$event.stopPropagation(); setMenuTitle('Voucher Entry / Bank Receipts')"><i class="bi bi-bank fs-6 ps-4 pe-2"></i> Bank Receipts</a></li>
+          <li><a routerLink="/voucher/cashreceipts" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="$event.stopPropagation(); setMenuTitle('Voucher Entry / Cash Receipts')"><i class="bi bi-cash-stack fs-6 ps-4 pe-2"></i> Cash Receipts</a></li>
+          <li><a routerLink="/voucher/bankpayment" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="$event.stopPropagation(); setMenuTitle('Voucher Entry / Bank Payment')"><i class="bi bi-credit-card-2-front fs-6 ps-4 pe-2"></i> Bank Payment</a></li>
+          <li><a routerLink="/voucher/cashpayment" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="$event.stopPropagation(); setMenuTitle('Voucher Entry / Cash Payment')"><i class="bi bi-wallet2 fs-6 ps-4 pe-2"></i> Cash Payment</a></li>
+          <li><a routerLink="/voucher/journal" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="$event.stopPropagation(); setMenuTitle('Voucher Entry / Journal')"><i class="bi bi-journal fs-6 ps-4 pe-2"></i> Journal</a></li>
+          <li><a routerLink="/voucher/debitnote" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="$event.stopPropagation(); setMenuTitle('Voucher Entry / Debit Note')"><i class="bi bi-arrow-left-circle fs-6 ps-4 pe-2"></i> Debit Note</a></li>
+          <li><a routerLink="/voucher/creditnote" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="$event.stopPropagation(); setMenuTitle('Voucher Entry / Credit Note')"><i class="bi bi-arrow-right-circle fs-6 ps-4 pe-2"></i> Credit Note</a></li>
+          <li><a routerLink="/voucher/contravoucher" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="$event.stopPropagation(); setMenuTitle('Voucher Entry / Contra Voucher')"><i class="bi bi-arrow-repeat fs-6 ps-4 pe-2"></i> Contra Voucher</a></li>
+        </ul>
+      </div>
+    </li>
+    <!-- Account Receivable -->
+    <li class="nav-item">
+      <a class="nav-link d-flex justify-content-between align-items-center"  (click)="toggleMenu('ar')" role="button">
+        <span><i class="bi bi-wallet2 ps-2 pe-1"></i> Account Receivable</span>
+        <i class="bi bi-chevron-down small"  [class.rotate]="isOpen('ar')"></i>
+      </a>
+      <div class="submenu"  [class.show]="isOpen('ar')">
+        <ul class="nav flex-column">
+          <li><a routerLink="/voucher/salevoucher" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="$event.stopPropagation(); setMenuTitle('Account Receivable / Sale Voucher')"><i class="bi bi-cart-check fs-6 ps-4 pe-2"></i> Sale Voucher</a></li>
+          <li><a routerLink="/voucher/debitadjustment" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="$event.stopPropagation(); setMenuTitle('Account Receivable / Debtor Bill Reconciliation')"><i class="bi bi-arrow-down-circle fs-6 ps-4 pe-2"></i> Debtor Bill Recon...</a></li>
+        </ul>
+      </div>
+    </li>
+    <!-- Account Payable -->
+    <li class="nav-item">
+      <a class="nav-link d-flex justify-content-between align-items-center"   (click)="toggleMenu('ap')"  role="button">
+        <span><i class="bi bi-cash ps-2 pe-1"></i> Account Payable</span>
+        <i class="bi bi-chevron-down small" [class.rotate]="isOpen('ap')"></i>
+      </a>
+      <div class="submenu"  [class.show]="isOpen('ap')">
+        <ul class="nav flex-column">
+          <li><a routerLink="/voucher/purchasebill" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="$event.stopPropagation(); setMenuTitle('Account Payable / Purchase Bill Entry')"><i class="bi bi-file-earmark-text fs-6 ps-4 pe-2"></i> Purchase Bill Entry</a></li>
+          <li><a routerLink="/voucher/creditadjustment" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="$event.stopPropagation(); setMenuTitle('Account Payable / Creditor Bill Reconciliation')"><i class="bi bi-arrow-up-circle fs-6 ps-4 pe-2"></i> Creditor Bill Recon...</a></li>
+        </ul>
+      </div>
+    </li>
+    <!-- Trial Balance -->
+    <li class="nav-item">
+      <a routerLink="voucher/trialbalance" routerLinkActive="active" class="nav-link" (click)="setMenuTitle('Trial Balance - Analysis')">
+        <i class="bi bi-graph-up ps-2 pe-1"></i> Trial Balance - Analysis </a>
+    </li>
+    <!-- Books Of Account -->
+    <li class="nav-item">
+      <a class="nav-link d-flex justify-content-between align-items-center" (click)="toggleMenu('ba')"  role="button">
+        <span><i class="bi bi-gear ps-2 pe-1"></i> Books of Account</span>
+        <i class="bi bi-chevron-down small" [class.rotate]="isOpen('ba')"></i>
+      </a>
+      <div class="submenu"  [class.show]="isOpen('ba')">
+        <ul class="nav flex-column">
+          <li> <a routerLink="/reports/tdsreport" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="$event.stopPropagation(); setMenuTitle('Reports / TDS Report')"> <i class="bi bi-percent fs-6 ps-4 pe-2"></i> TDS Report </a> </li>
+          <li> <a routerLink="/reports/gstreport" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="$event.stopPropagation(); setMenuTitle('Reports / GST Report')"> <i class="bi bi-receipt-cutoff fs-6 ps-4 pe-2"></i> GST Report </a> </li>
+          <!-- <li> <a routerLink="/reports/generalledgerreport" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="setMenuTitle('Reports / General Ledger')"> <i class="bi bi-journal-text fs-6 ps-4 pe-2"></i> General Ledger </a> </li> -->
+          <!-- <li> <a routerLink="/reports/subledgerreport" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="setMenuTitle('Reports / Sub Ledger')"> <i class="bi bi-file-earmark-text fs-6 ps-4 pe-2"></i> Sub Ledger </a> </li> -->
+          <li> <a routerLink="/reports/bankreconciliationreport" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="$event.stopPropagation(); setMenuTitle('Reports / Bank Reconciliationt')"> <i class="bi bi-bank fs-6 ps-4 pe-2"></i> Bank Reconciliation </a> </li>
+          <!-- <li> <a routerLink="/reports/ledgerpartywisereport" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="setMenuTitle('Reports / Ledger Party Wise Report')"> <i class="bi bi-people fs-6 ps-4 pe-2"></i> Ledger Party Wise </a> </li> -->
+          <!-- <li> <a routerLink="/reports/ledgeraccountwisereport" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="setMenuTitle('Reports / Ledger Account Wise Report')"> <i class="bi bi-journal-text fs-6 ps-4 pe-2"></i> Ledger Account Wise </a> </li> -->
+          <!-- <li> <a routerLink="/reports/bankbookreport" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="setMenuTitle('Reports / Bank Book Report')"> <i class="bi bi-bank fs-6 ps-4 pe-2"></i> Bank Book </a> </li> -->
+          <!-- <li> <a routerLink="/reports/cashbookreport" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="setMenuTitle('Reports / Cash Book Report')"> <i class="bi bi-cash-stack fs-6 ps-4 pe-2"></i> Cash Book </a> </li> -->
+          <li> <a routerLink="/reports/journalregisterreport" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="$event.stopPropagation(); setMenuTitle('Reports / Journal Register Report')"> <i class="bi bi-journal fs-6 ps-4 pe-2"></i> Journal Register </a> </li>
+          <li> <a routerLink="/reports/debitnoteregisterreport" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="$event.stopPropagation(); setMenuTitle('Reports / Debit Note Register')"> <i class="bi bi-file-earmark-minus fs-6 ps-4 pe-2"></i> Debit Note Register </a> </li>
+          <li> <a routerLink="/reports/creditnoteregisterreport" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="$event.stopPropagation(); setMenuTitle('Reports / Credit Note Register')"> <i class="bi bi-file-earmark-plus fs-6 ps-4 pe-2"></i> Credit Note Register </a> </li>
+          <li> <a routerLink="/reports/contravoucherregisterreport" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="$event.stopPropagation(); setMenuTitle('Reports / Contra Voucher Register')"> <i class="bi bi-arrow-left-right fs-6 ps-4 pe-2"></i> Contra Voucher </a> </li>
+          <li> <a routerLink="/reports/salesregisterreport" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="$event.stopPropagation(); setMenuTitle('Reports / Sales Register Report')"> <i class="bi bi-receipt fs-6 ps-4 pe-2"></i> Sales Register </a> </li>
+          <!-- <li> <a routerLink="/reports/salesjournalreport" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="setMenuTitle('Reports / Sales Journal Report')"> <i class="bi bi-journal-check fs-6 ps-4 pe-2"></i> Sales Journal </a> </li> -->
+          <li> <a routerLink="/reports/purchaseregisterreport" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="$event.stopPropagation(); setMenuTitle('Reports / Purchase Register Report')"> <i class="bi bi-cart fs-6 ps-4 pe-2"></i> Purchase Register </a> </li>
+          <li> <a routerLink="/reports/travelregisterreport" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="$event.stopPropagation(); setMenuTitle('Reports / Travel Register Report')"> <i class="bi bi-airplane fs-6 ps-4 pe-2"></i> Travel Register </a> </li>
+          <li> <a routerLink="/reports/ageingreport" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="$event.stopPropagation(); setMenuTitle('Reports / Ageing Report')"> <i class="bi bi-clock-history fs-6 ps-4 pe-2"></i> Ageing Report </a> </li>
+        </ul>
+      </div>
+    </li>
+    <!-- Master -->
+    <li class="nav-item">
+      <a class="nav-link d-flex justify-content-between align-items-center"  (click)="toggleMenu('master')" role="button">
+        <span><i class="bi bi-gear ps-2 pe-1"></i> Master</span>
+        <i class="bi bi-chevron-down small" [class.rotate]="isOpen('master')"></i>
+      </a>
+      <div class="submenu"  [class.show]="isOpen('master')">
+        <ul class="nav flex-column">
+          <li><a routerLink="/master/user" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="$event.stopPropagation(); setMenuTitle('Master / User')"><i class="bi bi-person fs-6 ps-4 pe-2"></i> User</a></li>
+          <li><a routerLink="/master/user-permissions" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="$event.stopPropagation(); setMenuTitle('Master / User Permissions')"><i class="bi bi-key fs-6 ps-4 pe-2"></i> User Permissions</a></li>
+          <li><a routerLink="/master/company" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="$event.stopPropagation(); setMenuTitle('Master / Company')"><i class="bi bi-building fs-6 ps-4 pe-2"></i> Company</a></li>
+          <li><a routerLink="/master/accounting-calendar" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="$event.stopPropagation(); setMenuTitle('Master / Accounting Calendar')"><i class="bi bi-calendar-event fs-6 ps-4 pe-2"></i> Accounting Calendar</a></li>
+          <li><a routerLink="/master/bank" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="$event.stopPropagation(); setMenuTitle('Master / Bank')"><i class="bi bi-building fs-6 ps-4 pe-2"></i> Bank</a></li>
+          <li><a routerLink="/master/ledger-account" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="setMenuTitle('Master / Ledger Account')"><i class="bi bi-journal-bookmark fs-6 ps-4 pe-2"></i> Ledger Account</a></li>
+          <li><a routerLink="/master/currency" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="$event.stopPropagation(); setMenuTitle('Master / Currency')"><i class="bi bi-currency-exchange fs-6 ps-4 pe-2"></i> Currency</a></li>
+          <li><a routerLink="/master/cost-center" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="$event.stopPropagation(); setMenuTitle('Master / Cost Center')"><i class="bi bi-diagram-3 fs-6 ps-4 pe-2"></i> Cost Center</a></li>
+          <li><a routerLink="/master/vendor" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="$event.stopPropagation(); setMenuTitle('Master / Vendor')"><i class="bi bi-truck fs-6 ps-4 pe-2"></i> Vendor</a></li>
+          <li><a routerLink="/master/import-supplier" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="$event.stopPropagation(); setMenuTitle('Master / Import Supp/Ven')"><i class="bi bi-globe fs-6 ps-4 pe-2"></i> Import Supp/Ven</a></li>
+          <li><a routerLink="/master/customer" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="$event.stopPropagation(); setMenuTitle('Master / Customer')"><i class="bi bi-person fs-6 ps-4 pe-2"></i> Customer</a></li>
+          <li><a routerLink="/master/import-customer" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="$event.stopPropagation(); setMenuTitle('Master / Import Customer')"><i class="bi bi-person-check fs-6 ps-4 pe-2"></i> Import Customer</a></li>
+          <li><a routerLink="/master/oprefix" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="setMenuTitle('Master / Define Oprefix')"><i class="bi bi-sliders fs-6 ps-4 pe-2"></i> Define Oprefix</a></li>
+          <li><a routerLink="/master/employee" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="$event.stopPropagation(); setMenuTitle('Master / Employee')"><i class="bi bi-people fs-6 ps-4 pe-2"></i> Employee</a></li>
+          <li><a routerLink="/master/import-employee" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="setMenuTitle('Master / Import Employee')"><i class="bi bi-upload fs-6 ps-4 pe-2"></i> Import Employee</a></li>
+          <li><a routerLink="/master/tds" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="$event.stopPropagation(); setMenuTitle('Master / TDS')"><i class="bi bi-percent fs-6 ps-4 pe-2"></i> TDS</a></li>
+          <li><a routerLink="/master/bank-instrument" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="$event.stopPropagation(); setMenuTitle('Master / Bank Instrument')"><i class="bi bi-receipt fs-6 ps-4 pe-2"></i> Bank Instrument</a></li>
+        </ul>
+      </div>
+    </li>
+  </ul>
+  <!-- Logout -->
+  <li class="nav-item">
+    <a style="cursor: pointer;" (click)="logout()">
+      <i class="bi bi-box-arrow-right fs-6 ps-2 pe-1"></i> <span class="menuname">Logout</span>
+    </a>
+  </li>
+</div>

@@ -1,0 +1,189 @@
+<div class="p-3">
+    <form [formGroup]="accountForm" novalidate>
+
+        <!-- Basic details -->
+        <div class="bglightgreen p-3 mb-3">
+            <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                    <h6 class="fw-semibold mb-0">Account Details</h6>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label class="form-label">Account Code <span class="text-danger">*</span></label>
+                    <input class="form-control" formControlName="accountCode" placeholder="Account Code" [ngClass]="{'is-invalid': isInvalid('accountCode')}" />
+                    <div class="invalid-feedback d-block" *ngIf="hasError('accountCode','required')">Account Code is required.</div>
+                    <div class="invalid-feedback d-block" *ngIf="hasError('accountCode','maxlength')">Max 20 characters.</div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Account Status <span class="text-danger">*</span></label>
+                    <select class="form-select" formControlName="accountStatus" [ngClass]="{'is-invalid': isInvalid('accountStatus')}">
+                        <option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Description <span class="text-danger">*</span></label>
+                    <input class="form-control" formControlName="description" placeholder="Description" [ngClass]="{'is-invalid': isInvalid('description')}" />
+                    <div class="invalid-feedback d-block" *ngIf="hasError('description','required')">Description is required.</div>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label class="form-label">Activate Period</label>
+                    <input class="form-control" formControlName="activatePeriod" placeholder="YYYYMM" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Account Type <span class="text-danger">*</span></label>
+                    <select class="form-select" formControlName="accountType" [ngClass]="{'is-invalid': isInvalid('accountType')}">
+                        <option value="">Select Account Type</option>
+                        <option *ngFor="let t of accountTypes" [value]="t.parameterCode">{{ t.parameterDescription }}</option>
+                    </select>
+                    <div class="invalid-feedback d-block" *ngIf="hasError('accountType','required')">Account Type is required.</div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Group Item</label>
+                    <select class="form-select" formControlName="groupItem">
+                        <option *ngFor="let g of groupItemOptions" [value]="g.value">{{ g.label }}</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Parent Refr</label>
+                    <input class="form-control" formControlName="parentRefr" placeholder="Parent Account Ref" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3 d-flex align-items-center">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="zeroLevelCheck" formControlName="zeroLevelCheck" />
+                        <label class="form-check-label fw-semibold text-danger" for="zeroLevelCheck">0 Level then Check the Item</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nature / Applicability -->
+        <div class="bglightgreen p-3 mb-3">
+            <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                    <h6 class="fw-semibold mb-0">Applicability</h6>
+                    <span class="text-muted small" *ngIf="isGroupItem">Fields disabled — Group Item = Yes</span>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label class="form-label">Nature of Account <span class="text-danger">*</span></label>
+                    <select class="form-select" formControlName="natureOfAccount" [ngClass]="{'is-invalid': isInvalid('natureOfAccount')}">
+                        <option value="">Select Nature</option>
+                        <option *ngFor="let n of accountNatures" [value]="n.parameterCode">{{ n.parameterDescription }}</option>
+                    </select>
+                    <div class="invalid-feedback d-block" *ngIf="hasError('natureOfAccount','required')">Nature is required.</div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Banker</label>
+                    <select class="form-select" formControlName="banker" *ngIf="isBankAccountType">
+                        <option value="">Select Bank</option>
+                        <option *ngFor="let b of bankList" [value]="b.bankCode">{{ b.bankCode }} — {{ b.name }}</option>
+                    </select>
+                    <input class="form-control" formControlName="banker" placeholder="Banker" *ngIf="!isBankAccountType" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">EFC Account</label>
+                    <select class="form-select" formControlName="efcAccount">
+                        <option value="">Select</option>
+                        <option value="Y">Yes</option>
+                        <option value="N">No</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mt-4 d-flex justify-content-end gap-2">
+                    <button tabIndex="0" type="button" class="btn btn-primary" style="width: 80px;" (click)="onClear()" (keydown.enter)="onClear()">New</button>
+                    <button tabIndex="0" type="button" class="btn btn-success" style="width: 80px;" [disabled]="isSaving" (click)="onSave()" (keydown.enter)="onSave()">
+                        <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-1"></span>{{ isEditMode ? 'Update' : 'Save' }}
+                    </button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <label class="form-label d-block">Applicable On:</label>
+                    <div class="d-flex flex-wrap gap-4">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="billwiseAppl" formControlName="billwiseAppl" />
+                            <label class="form-check-label" for="billwiseAppl">Bill wise Details</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="budgetAppl" formControlName="budgetAppl" />
+                            <label class="form-check-label" for="budgetAppl">Budget</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="costAppl" formControlName="costAppl" />
+                            <label class="form-check-label" for="costAppl">Cost</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="subledgerAppl" formControlName="subledgerAppl" />
+                            <label class="form-check-label" for="subledgerAppl">Subledger</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="employeeAppl" formControlName="employeeAppl" />
+                            <label class="form-check-label" for="employeeAppl">Employee</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="costTypeAppl" formControlName="costTypeAppl" />
+                            <label class="form-check-label" for="costTypeAppl">Cost Type</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="expenseAppl" formControlName="expenseAppl" />
+                            <label class="form-check-label" for="expenseAppl">Expense Type</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- Search + counter -->
+    <div class="row align-items-center mb-2">
+        <div class="col-md-9">
+            <span class="text-muted small">Showing {{ filteredAccountList.length }} of {{ accountList.length }} accounts</span>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <input type="text" class="form-control" [(ngModel)]="searchText" [ngModelOptions]="{standalone: true}" placeholder="Search..." />
+            <button class="btn btn-primary" (click)="searchText = ''">Clear</button>
+        </div>
+    </div>
+
+    <!-- Account list table -->
+    <div class="table-responsive mb-3" style="height:60vh; max-height:60vh; overflow:auto;">
+        <table class="table table-borderless mb-0">
+            <thead class="table-light sticky-header">
+                <tr>
+                    <th style="text-align:left; width:10%;">Code</th>
+                    <th style="text-align:left; width:30%;">Description</th>
+                    <th style="text-align:left; width:10%;">Type</th>
+                    <th style="text-align:left; width:10%;">Nature</th>
+                    <th style="text-align:left; width:8%;">Group</th>
+                    <th style="text-align:left; width:10%;">Banker</th>
+                    <th style="text-align:left; width:10%;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let row of filteredAccountList" [class.table-warning]="isEditMode && row.accountCode === editingCode">
+                    <td style="text-align:left; cursor:pointer;">
+                        <a href="#" (click)="startEdit(row); $event.preventDefault()">{{ row.accountCode }}</a>
+                    </td>
+                    <td class="align-middle text-start">{{ row.description }}</td>
+                    <td class="align-middle text-start">{{ accountTypeLabel(row.accountType) }}</td>
+                    <td class="align-middle text-start">{{ natureLabel(row.natureOfAccount) }}</td>
+                    <td class="align-middle text-start">{{ row.controlAccount === 'Y' ? 'Yes' : 'No' }}</td>
+                    <td class="align-middle text-start">{{ row.banker }}</td>
+                    <td class="align-middle text-start">{{ statusLabel(row.accountStatus) }}</td>
+                </tr>
+                <tr *ngIf="filteredAccountList.length === 0">
+                    <td colspan="7" class="text-center text-muted py-3">No accounts found.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div *ngIf="isLoading" class="spinner-overlay">
+    <div class="spinner"></div>
+</div>

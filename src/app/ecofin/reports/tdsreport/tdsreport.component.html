@@ -1,0 +1,294 @@
+<div class="p-3">
+    <form [formGroup]="filterForm" novalidate>
+        <div class="bglightgreen p-3 mb-3">
+            <div class="row align-items-start">
+                <div class="col-md-3">
+                    <label class="form-label mb-1">Account Code <span class="text-danger">*</span></label>
+                    <app-multi-select formControlName="accountCode" [items]="tdsAccounts" bindValue="accountCode" [displayWith]="accDisplay" placeholder="Select Account(s)" [maxDisplayCount]="2" (selectionChange)="onAccountChange($event)">
+                    </app-multi-select>
+                    <div class="invalid-feedback d-block" *ngIf="hasError('accountCode', 'required')"> Account Code is required. </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label mb-1">From Date <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" formControlName="fromDate" [max]="today" [ngClass]="{ 'is-invalid': isInvalid('fromDate') }" />
+                    <div class="invalid-feedback d-block" *ngIf="hasError('fromDate', 'required')">
+                        From Date is required.
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label mb-1">To Date <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" formControlName="toDate" [max]="today" [ngClass]="{ 'is-invalid': isInvalid('toDate') }" />
+                    <div class="invalid-feedback d-block" *ngIf="hasError('toDate', 'required')">
+                        To Date is required.
+                    </div>
+                    <div class="invalid-feedback d-block" *ngIf="filterForm.get('toDate')?.hasError('dateInvalid')">
+                        To Date should be greater than or equal to From Date.
+                    </div>
+                </div>
+                <div class="col-md-5 d-flex align-items-end mt-4 gap-2 flex-wrap">
+                    <button type="button" class="btn btn-primary" style="width: 80px;" (click)="onRetrieve()">Load</button>
+                    <button type="button" class="btn btn-primary" style="width: 80px;" (click)="onClose()">Clear</button>
+                    <ng-container *ngIf="reportRows.length > 0">
+                        <button type="button" class="btn btn-primary" style="width: 80px;" (click)="downloadPdf()">
+                            <i class="fa fa-download me-1"></i> PDF
+                        </button>
+                        <button type="button" class="btn btn-primary" style="width: 80px;" (click)="downloadExcel()">
+                            <i class="fa fa-download me-1"></i> Excel
+                        </button>
+                    </ng-container>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="table-responsive debit-table" *ngIf="reportRows.length > 0" style="height:65vh; max-height:65vh; overflow:auto;">
+        <table class="table table-borderless mb-0">
+            <thead class="table-light sticky-header ">
+                <tr>
+                    <th style="text-align:left; width:9%;">TDS Account</th>
+                    <th style="text-align:left; width:10%;">Vchr Number</th>
+                    <th style="text-align:left; width:8%;">Vchr Date</th>
+                    <th style="text-align:left; width:20%;">Sub Account Code &amp; Description</th>
+                    <th style="text-align:left; width:7%;">Db\Cr Flag</th>
+                    <th style="text-align:right; width:7%;">TDS Ded Amount</th>
+                    <th style="text-align:right; width:7%;">TDS Amount</th>
+                    <th style="text-align:right; width:7%;">Bill Amount</th>
+                    <th style="text-align:left; width:7%;">TDS Code</th>
+                    <th style="text-align:right; width:7%;">Amount</th>
+                    <th style="text-align:left; width:10%;">TDS Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let row of reportRows">
+                    <td style="text-align:left;">{{ row.tdsAccount }}</td>
+                    <td style="text-align:left;">
+                        <a href="#" (click)="openVoucherPopup(row.vchrNumber, row.vchrDate); $event.preventDefault()">
+                            {{ row.vchrNumber || '' }}
+                        </a>
+                    </td>
+                    <td style="text-align:left;">{{ row.vchrDate }}</td>
+                    <td style="text-align:left;">{{ row.subAccountCode }} → {{ row.subAccountCodeDesc }}</td>
+                    <td style="text-align:left;">{{ row.dbCrFlag }}</td>
+                    <td style="text-align:right;">{{ row.tdsDedAmount | number:'1.2-2' }}</td>
+                    <td style="text-align:right;">{{ row.tdsAmount | number:'1.2-2' }}</td>
+                    <td style="text-align:right;">{{ row.billAmount | number:'1.2-2' }}</td>
+                    <td style="text-align:left;">{{ row.tdsCode }}</td>
+                    <td style="text-align:right;">{{ row.amount | number:'1.2-2' }}</td>
+                    <td style="text-align:left;">{{ row.tdsDescription }}</td>
+                </tr>
+            </tbody>
+            <tfoot class="table-light fw-bold">
+                <tr>
+                    <td colspan="9" style="text-align:right; background-color:#4EAA39; color: white;">Totals</td>
+                    <td style="text-align:right; background-color:#4EAA39; color: white;">
+                        {{ (debitTotal + creditTotal) | number:'1.2-2' }}
+                    </td>
+                    <td style="text-align:right; background-color:#4EAA39; color: white;"></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="modal-backdrop fade show" *ngIf="showVoucherPopup" (click)="closeVoucherPopup()"></div>
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" *ngIf="showVoucherPopup">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title fs-5">
+                        Voucher Details for : {{ voucherPopupTitle }}&nbsp;&nbsp;dated&nbsp;&nbsp;{{ voucherPopupDateRaw }}
+                    </h6>
+                    <button type="button" class="btn-close" (click)="closeVoucherPopup()"></button>
+                </div>
+                <div class="modal-body p-3">
+                    <div style="height:65vh; max-height:65vh; overflow:auto;">
+                        <table class="table table-borderless mb-0">
+                            <thead class="table-light sticky-header">
+                                <tr>
+                                    <th style="text-align:left; width:45%;">Account Description / Line Particulars</th>
+                                    <th style="text-align:left; width:20%;">Inst.no/Date</th>
+                                    <th class="text-end" style="width:17%;">Debit</th>
+                                    <th class="text-end" style="width:18%;">Credit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let entry of voucherEntries; trackBy: trackByVoucherEntry">
+                                    <td style="text-align:left;">
+                                        <div>{{ entry.accountCode }} {{ entry.description }}</div>
+                                        <div *ngIf="entry.lineDetails" class="text-muted small">{{ entry.lineDetails }}</div>
+                                        <div *ngIf="entry.subAccountCode" class="small">
+                                            {{ entry.subAccountCode }} : {{ entry.subCodeDescription }}
+                                        </div>
+                                    </td>
+                                    <td style="text-align:left;">
+                                        <span *ngIf="entry.instrumentNo">{{ entry.instrumentNo }}</span>
+                                        <span *ngIf="entry.instrumentDate"><br>{{ entry.instrumentDate | date:'dd-MM-yyyy' }}</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <span *ngIf="entry.debit">{{ entry.debit | number:'1.2-2' }}</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <span *ngIf="entry.credit">{{ entry.credit | number:'1.2-2' }}</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="fw-bold">
+                                <tr>
+                                    <td style="text-align:right; background-color:#4EAA39; color: white;" colspan="2" class="text-end">Voucher Totals</td>
+                                    <td style="text-align:right; background-color:#4EAA39; color: white;">
+                                        {{ voucherTotalDebit | number:'1.2-2' }}
+                                    </td>
+                                    <td style="text-align:right; background-color:#4EAA39; color: white;">
+                                        {{ voucherTotalCredit | number:'1.2-2' }}
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        <div *ngIf="voucherNarration" class="mt-2 px-1">
+                            <strong style="color: green;">Narration : </strong>
+                            <span>{{ voucherNarration }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer d-flex justify-content-between">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button type="button" class="btn btn-primary" (click)="onBillsPaymentsAdjusted()">
+                            Bills/Payments Adjusted
+                        </button>
+                        <button type="button" class="btn btn-primary" (click)="onViewCostProduct()">
+                            View Cost/Product
+                        </button>
+                        <button type="button" class="btn btn-primary" style="width: 80px;" [disabled]="!voucherEntries.length" (click)="downloadVoucherPdf()">
+                            <i class="fa fa-download me-1"></i> PDF
+                        </button>
+                        <button type="button" class="btn btn-primary" style="width: 80px;" [disabled]="!voucherEntries.length" (click)="downloadVoucherExcel()">
+                            <i class="fa fa-download me-1"></i> Excel
+                        </button>
+                    </div>
+                    <button type="button" class="btn btn-primary" (click)="closeVoucherPopup()">Ok</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop fade show" *ngIf="showCostProductPopup" (click)="closeCostProductPopup()"></div>
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" *ngIf="showCostProductPopup">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+            <div class="modal-content" style="min-height: 87vh;">
+                <div class="modal-header">
+                    <h6 class="modal-title fs-5">Cost / Product Entries</h6>
+                    <button type="button" class="btn-close" (click)="closeCostProductPopup()"></button>
+                </div>
+                <div class="modal-body p-3">
+                    <div *ngIf="costProductEntries.length === 0" class="text-muted text-center py-3">
+                        No cost/product entries found.
+                    </div>
+                    <div *ngIf="costProductEntries.length > 0">
+                        <table class="table table-sm table-borderless mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="text-align:left; width:60%;">Dept. Cde Description</th>
+                                    <th class="text-end" style="width:40%;">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <ng-container *ngFor="let group of costProductGrouped">
+                                    <tr>
+                                        <td colspan="2" class="fw-bold pt-3" style="color: green;">
+                                            {{ group.accountCode }} : {{ group.description }}
+                                        </td>
+                                    </tr>
+                                    <tr *ngFor="let item of group.items">
+                                        <td style="text-align:left; padding-left: 20px;">
+                                            {{ item.costCentreCode }}&nbsp;&nbsp;&nbsp;&nbsp;{{ item.costCentreDescription }}
+                                        </td>
+                                        <td class="text-end">{{ item.voucherAmount | number:'1.2-2' }}</td>
+                                    </tr>
+                                    <tr class="fw-bold">
+                                        <td class="text-end">Account Total</td>
+                                        <td class="text-end">{{ group.total | number:'1.2-2' }}</td>
+                                    </tr>
+                                </ng-container>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer d-flex justify-content-between">
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-primary" style="width: 80px;" [disabled]="costProductEntries.length === 0" (click)="downloadCostProductPdf()">
+                            <i class="fa fa-download me-1"></i> PDF
+                        </button>
+                        <button type="button" class="btn btn-primary" style="width: 80px;" [disabled]="costProductEntries.length === 0" (click)="exportCostProductToExcel()">
+                            <i class="fa fa-download me-1"></i> Excel
+                        </button>
+                    </div>
+                    <button type="button" class="btn btn-primary" (click)="closeCostProductPopup()">Ok</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop fade show" *ngIf="showBillsAdjustedPopup" (click)="closeBillsAdjustedPopup()"></div>
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" *ngIf="showBillsAdjustedPopup">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+            <div class="modal-content" style="min-height: 87vh;">
+                <div class="modal-header">
+                    <h6 class="modal-title fs-5">
+                        Bills/Payments Adjusted Details &nbsp;—&nbsp;
+                        <span>{{ voucherPopupTitle }}</span>
+                    </h6>
+                    <button type="button" class="btn-close" (click)="closeBillsAdjustedPopup()"></button>
+                </div>
+                <div class="modal-body p-3">
+                    <div *ngIf="billsAdjustedLoading" class="text-center py-3">
+                        <span class="spinner-border spinner-border-sm text-primary me-2"></span>
+                        Loading bills/payments adjusted details...
+                    </div>
+                    <div *ngIf="!billsAdjustedLoading && billsAdjustedRows.length > 0" style="height:65vh; max-height:65vh; overflow:auto;">
+                        <table class="table table-borderless mb-0">
+                            <thead class="table-light sticky-header">
+                                <tr>
+                                    <th style="text-align:left;">Voucher Number</th>
+                                    <th style="text-align:left;">Voucher Date</th>
+                                    <th style="text-align:left;">Reference Number</th>
+                                    <th style="text-align:left;">Reference Date</th>
+                                    <th style="text-align:left;">Bill Number</th>
+                                    <th style="text-align:left;">Bill Date</th>
+                                    <th class="text-end">Bill Adjusted Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let row of billsAdjustedRows; trackBy: trackByBillsAdjusted">
+                                    <td style="text-align:left;">{{ row.voucherNumber }}</td>
+                                    <td style="text-align:left;">{{ row.voucherDate | date:'dd-MM-yyyy' }}</td>
+                                    <td style="text-align:left;">{{ row.referenceNumber }}</td>
+                                    <td style="text-align:left;">{{ row.referenceDate | date:'dd-MM-yyyy' }}</td>
+                                    <td style="text-align:left;">{{ row.billNumber }}</td>
+                                    <td style="text-align:left;">{{ row.billDate | date:'dd-MM-yyyy' }}</td>
+                                    <td class="text-end">{{ row.billAdjustedAmount | number:'1.2-2' }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div *ngIf="!billsAdjustedLoading && billsAdjustedRows.length === 0" class="text-center text-muted py-3">
+                        No bills/payments adjusted entries found for this voucher.
+                    </div>
+                </div>
+                <div class="modal-footer d-flex justify-content-between">
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-primary" style="width: 80px;" [disabled]="billsAdjustedRows.length === 0" (click)="downloadBillsAdjustedPdf()">
+                            <i class="fa fa-download me-1"></i> PDF
+                        </button>
+                        <button type="button" class="btn btn-primary" style="width: 80px;" [disabled]="billsAdjustedRows.length === 0" (click)="exportBillsAdjustedToExcel()">
+                            <i class="fa fa-download me-1"></i> Excel
+                        </button>
+                    </div>
+                    <button type="button" class="btn btn-primary" (click)="closeBillsAdjustedPopup()">Ok</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div *ngIf="isLoading" class="spinner-overlay">
+        <div class="spinner"></div>
+    </div>
+</div>

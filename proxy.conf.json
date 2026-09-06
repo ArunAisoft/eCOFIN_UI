@@ -1,0 +1,7 @@
+{
+    "/api": {
+      "target": "https://dcxsznr37himm.cloudfront.net",
+      "secure": true,
+      "changeOrigin": true
+    }
+  }

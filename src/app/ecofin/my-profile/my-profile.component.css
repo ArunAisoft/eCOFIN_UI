@@ -1,0 +1,3 @@
+.telephone span.countrycode {  position: absolute;  left: 5px;  top: 34.5px; padding-right: 3px;    border-right: 1px solid #aba5a5;}
+.telephone input {  padding-left: 40px;}
+.form-select.disabled {pointer-events: none; background: #E9ECEF;}

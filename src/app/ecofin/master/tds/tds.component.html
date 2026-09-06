@@ -1,0 +1,97 @@
+<div class="p-3">
+  <form [formGroup]="form">
+    <div class="table-responsive mb-3" style="height:80vh; max-height:80vh; overflow:auto;">
+      <table class="table table-borderless mb-0">
+        <thead class="table-light sticky-header">
+          <tr>
+            <th style="text-align:left; width:10%;">Code <span class="text-danger">*</span></th>
+            <th style="text-align:left; width:60%;">Description <span class="text-danger">*</span></th>
+            <th style="text-align:left; width:12%;">TDS % <span class="text-danger">*</span></th>
+            <th style="text-align:left; width:12%;">Status <span class="text-danger">*</span></th>
+            <th style="text-align:left; width:8%;">Action</th>
+          </tr>
+        </thead>
+        <tbody formArrayName="tdsRecords">
+          <tr *ngFor="let row of tdsRecords.controls; let i = index" [formGroupName]="i">
+            <ng-container *ngIf="row.get('isNew')?.value">
+              <td style="text-align:left;">
+                <input class="form-control form-control-sm" formControlName="tdscode" placeholder="e.g. TDS01" [ngClass]="{ 'is-invalid': isRowInvalid(row, 'tdscode') }" />
+                <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'tdscode', 'required')">Code is required.</div>
+                <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'tdscode', 'maxlength')">Max 5 characters.</div>
+              </td>
+              <td style="text-align:left;">
+                <input class="form-control form-control-sm" formControlName="tdsdescription" placeholder="TDS Description" [ngClass]="{ 'is-invalid': isRowInvalid(row, 'tdsdescription') }" />
+                <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'tdsdescription', 'required')">Description is required.</div>
+                <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'tdsdescription', 'maxlength')">Max 100 characters.</div>
+              </td>
+              <td style="text-align:left;">
+                <input type="number" class="form-control form-control-sm" formControlName="tdsperc" placeholder="0.000" min="0" max="100" step="0.001" [ngClass]="{ 'is-invalid': isRowInvalid(row, 'tdsperc') }" />
+                <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'tdsperc', 'required')"> Percentage is required.</div>
+                <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'tdsperc', 'min')">Min value is 0.</div>
+                <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'tdsperc', 'max')">Max value is 100.</div>
+              </td>
+              <td style="text-align:left;">
+                <select class="form-select form-select-sm" formControlName="objectStatus" [ngClass]="{ 'is-invalid': isRowInvalid(row, 'objectStatus') }">
+                  <option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</option>
+                </select>
+                <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'objectStatus', 'required')">Status is required.</div>
+              </td>
+              <td style="text-align:left;">
+                <i class="fa fa-save fs-5 me-2 text-success" style="cursor:pointer;" title="Save" (click)="saveNewRow(i)"></i>
+                <i class="fa fa-times-circle fs-5 text-danger" style="cursor:pointer;" title="Clear" (click)="clearNewRow(i)"></i>
+              </td>
+            </ng-container>
+            <ng-container *ngIf="!row.get('isNew')?.value">
+              <td style="text-align:left;">
+                <strong>{{ row.get('tdscode')?.value }}</strong>
+              </td>
+              <td class="align-middle text-start;">
+                <span *ngIf="!row.get('isEdit')?.value">{{ row.get('tdsdescription')?.value }}</span>
+                <ng-container *ngIf="row.get('isEdit')?.value">
+                  <input class="form-control form-control-sm" formControlName="tdsdescription" [ngClass]="{ 'is-invalid': isRowInvalid(row, 'tdsdescription') }" />
+                  <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'tdsdescription', 'required')">Description is required.</div>
+                  <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'tdsdescription', 'maxlength')">Max 100 characters.</div>
+                </ng-container>
+              </td>
+              <td class="align-middle text-start;">
+                <span *ngIf="!row.get('isEdit')?.value">{{ row.get('tdsperc')?.value }}</span>
+                <ng-container *ngIf="row.get('isEdit')?.value">
+                  <input type="number" class="form-control form-control-sm" formControlName="tdsperc" placeholder="0.000" min="0" max="100" step="0.001" [ngClass]="{ 'is-invalid': isRowInvalid(row, 'tdsperc') }" />
+                  <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'tdsperc', 'required')"> Percentage is required.</div>
+                  <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'tdsperc', 'min')">Min value is 0.</div>
+                  <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'tdsperc', 'max')">Max value is 100.</div>
+                </ng-container>
+              </td>
+              <td class="align-middle text-start;">
+                <ng-container *ngIf="!row.get('isEdit')?.value">
+                  <span>{{ statusLabel(row.get('objectStatus')?.value) }}</span>
+                </ng-container>
+                <ng-container *ngIf="row.get('isEdit')?.value">
+                  <select class="form-select form-select-sm" formControlName="objectStatus" [ngClass]="{ 'is-invalid': isRowInvalid(row, 'objectStatus') }">
+                    <option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</option>
+                  </select>
+                  <div class="invalid-feedback d-block" *ngIf="hasRowError(row, 'objectStatus', 'required')">Status is required.</div>
+                </ng-container>
+              </td>
+              <td class="align-middle text-start;">
+                <ng-container *ngIf="!row.get('isEdit')?.value">
+                  <i class="fa fa-pencil fs-5 text-success" style="cursor:pointer;" title="Edit" (click)="startEdit(i)"></i>
+                </ng-container>
+                <ng-container *ngIf="row.get('isEdit')?.value">
+                  <i class="fa fa-check fs-5 text-success me-2" style="cursor:pointer;" title="Update" (click)="updateRow(i)"></i>
+                  <i class="fa fa-times fs-5 text-danger" style="cursor:pointer;" title="Cancel" (click)="cancelEdit(i)"></i>
+                </ng-container>
+              </td>
+            </ng-container>
+          </tr>
+          <tr *ngIf="tdsRecords.controls.length === 0">
+            <td colspan="5" class="text-center text-muted py-3">No TDS records found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </form>
+</div>
+<div *ngIf="isLoading" class="spinner-overlay">
+  <div class="spinner"></div>
+</div>

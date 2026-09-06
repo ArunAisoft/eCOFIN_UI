@@ -1,0 +1,23 @@
+<div class="ss-container" #container>
+    <ng-container *ngIf="!searchable">
+        <select #nativeSelect class="form-select" [class.is-invalid]="invalid" [disabled]="isDisabled" (change)="onNativeSelectChange($event)" [value]="_coerceValueForSelect(_value)">
+            <option value="__null__">{{ placeholder }}</option>
+            <option *ngFor="let it of items; trackBy: trackByIndex" [value]="_coerceValueForSelect(bindValue ? it[bindValue] : it)"> {{ getLabel(it) }} </option>
+        </select>
+    </ng-container>
+    <ng-container *ngIf="searchable">
+        <div class="ss-control d-flex justify-content-between align-items-center" (click)="toggle()" [class.disabled]="isDisabled" [class.open]="dropdownOpen" [class.is-invalid]="invalid">
+            <div class="ss-label text-truncate"> {{ getSelectedLabel() }} </div>
+            <div class="ss-caret">&#9662;</div>
+        </div>
+        <div class="ss-panel" *ngIf="dropdownOpen" [ngClass]="panelPositionClass">
+            <div class="p-2">
+                <input #searchInput type="text" class="form-control" placeholder="Search..." [(ngModel)]="search" (ngModelChange)="onSearchChange($event)" [disabled]="isDisabled" />
+            </div>
+            <div class="ss-list">
+                <div *ngFor="let it of filtered; let i = index; trackBy: trackByIndex" class="ss-item" (click)="select(it)" [class.highlight]="i === highlightedIndex"> {{ getLabel(it) }} </div>
+                <div *ngIf="!filtered.length" class="text-muted p-2"> No results </div>
+            </div>
+        </div>
+    </ng-container>
+</div>

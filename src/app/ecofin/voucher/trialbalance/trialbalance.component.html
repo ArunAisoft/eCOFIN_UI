@@ -1,0 +1,490 @@
+<div class="p-3">
+  <div class="bglightgreen p-3 mb-3">
+    <div class="row d-flex align-items-center">
+      <div class="col-md-12" [formGroup]="header">
+        <div class="row">
+          <div class="col-md-2">
+            <label class="form-label">Financial Year <span class="text-danger">*</span></label>
+            <select tabIndex="0" class="form-select" formControlName="year" (change)="onYearChange()" [ngClass]="{'is-invalid': header.get('year')?.invalid && (header.get('year')?.touched || header.get('year')?.dirty)}">
+              <option *ngFor="let fy of years" [ngValue]="fy.financialyear">{{ fy.financialyear }}</option>
+            </select>
+            <div class="invalid-feedback d-block" *ngIf="header.get('year')?.invalid && (header.get('year')?.touched || header.get('year')?.dirty)"> Year is required. </div>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Month <span class="text-danger">*</span></label>
+            <select tabIndex="0" class="form-select" formControlName="month" (change)="onMonthChange()" [ngClass]="{'is-invalid': header.get('month')?.invalid && (header.get('month')?.touched || header.get('month')?.dirty)}">
+              <option *ngFor="let m of months" [ngValue]="m.accperiod">{{ m.accperiod }}</option>
+            </select>
+            <div class="invalid-feedback d-block" *ngIf="header.get('month')?.invalid && (header.get('month')?.touched || header.get('month')?.dirty)"> Month is required. </div>
+          </div>
+          <div class="col-md-5">
+            <label class="form-label">Financial Year Type</label>
+            <div class="d-flex gap-3">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" formControlName="fyType" value="APR_MAR">
+                <label class="form-check-label">Apr – Mar</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" formControlName="fyType" value="JAN_DEC">
+                <label class="form-check-label">Jan – Dec</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3  d-flex align-items-end mt-4 gap-2 flex-wrap justify-content-end">           
+            <button class="btn btn-primary" style="width:90px;" [disabled]="!hasActiveTabData()" (click)="downloadActivePdf()">
+              <i class="fa fa-download me-1"></i> PDF
+            </button>
+            <button class="btn btn-primary" style="width:90px;" [disabled]="!hasActiveTabData()" (click)="downloadActiveExcel()">
+              <i class="fa fa-download me-1"></i> Excel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row align-items-center mb-2">
+    <div class="col-md-9" *ngIf="breadcrumbs.length">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item" *ngFor="let bc of breadcrumbs; let last = last" [class.active]="last">
+            <ng-container *ngIf="!last">
+              <a href="#" (click)="breadcrumbClick(bc); $event.preventDefault()"> {{ bc.label }} </a>
+            </ng-container>
+            <ng-container *ngIf="last"> {{ bc.label }} </ng-container>
+          </li>
+        </ol>
+      </nav>
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+      <input type="text" class="form-control" [(ngModel)]="searchText" (ngModelChange)="onSearchChange($event)" />
+      <button class="btn btn-primary" (click)="clearSearch()">Clear</button>
+    </div>
+  </div>
+  <nav>
+    <div class="nav nav-tabs" role="tablist">
+      <button class="nav-link" [class.active]="activeTab==='trialBalance'" (click)="setActiveTab('trialBalance')">Trial Balance</button>
+      <button class="nav-link" [class.active]="activeTab==='glDetails'" (click)="setActiveTab('glDetails')">GL Account Details</button>
+      <button class="nav-link" [class.active]="activeTab==='subledgerSchedule'" (click)="setActiveTab('subledgerSchedule')">Sub Ledger Schedule</button>
+      <button class="nav-link" [class.active]="activeTab==='subledgerAccount'" (click)="setActiveTab('subledgerAccount')">Subledger Account Details</button>
+      <button class="nav-link" [class.active]="activeTab==='billsPayments'" (click)="setActiveTab('billsPayments')">Open Bills and Payments</button>
+    </div>
+  </nav>
+  <div class="tab-content p-3 border border-top-0" id="nav-tabContent">
+    <div *ngIf="activeTab==='trialBalance'">
+      <div class="table-responsive mb-3" style="height:60vh; max-height:60vh; overflow:auto;">
+        <table class="table table-group align-middle mb-0 trial-balance-table">
+          <thead class="table-light sticky-header">
+            <tr>
+              <th style="text-align:left; cursor:pointer;" (click)="sortTable('accountCode')"> Account Code <i *ngIf="sortColumn==='accountCode'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+              <th style="text-align:left; cursor:pointer;" (click)="sortTable('description')"> Description <i *ngIf="sortColumn==='description'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+              <th class="text-end" style="cursor:pointer;" (click)="sortTable('debit')"> Debit <i *ngIf="sortColumn==='debit'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+              <th class="text-end" style="cursor:pointer;" (click)="sortTable('credit')"> Credit <i *ngIf="sortColumn==='credit'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of filteredTrialBalance; trackBy: trackByAccountCode">
+              <td style="text-align:left;">
+                <a href="#" (click)="onTrialBalanceAccountClick(row); $event.preventDefault()">
+                  <span [innerHTML]="highlightText(row.accountCode)"></span>
+                </a>
+              </td>
+              <td style="text-align:left;"><span [innerHTML]="highlightText(row.description)"></span></td>
+              <td class="text-end">{{ row.debit | number:'1.2-2' }}</td>
+              <td class="text-end">{{ row.credit | number:'1.2-2' }}</td>
+            </tr>
+          </tbody>
+          <tfoot class="bglightgreen fw-bold">
+            <tr>
+              <td colspan="2" style="text-align:right; background-color:#4EAA39; color: white;">Total</td>
+              <td style="text-align:right; background-color:#4EAA39; color: white;">{{ totaltbDebit | number:'1.2-2' }}</td>
+              <td style="text-align:right; background-color:#4EAA39; color: white;">{{ totaltbCredit | number:'1.2-2' }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+    <div *ngIf="activeTab==='glDetails'">
+      <div class="table-responsive mb-3" style="height:60vh; max-height:60vh; overflow:auto;">
+        <table class="table table-group align-middle mb-0 gl-details-table">
+          <thead class="table-light sticky-header">
+            <tr>
+              <th style="text-align:left; cursor:pointer;" (click)="sortTable('voucherNumber')"> Voucher No <i *ngIf="sortColumn==='voucherNumber'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+              <th style="text-align:left; cursor:pointer;" (click)="sortTable('voucherDate')"> Date <i *ngIf="sortColumn==='voucherDate'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+              <th style="text-align:left; cursor:pointer;" (click)="sortTable('voucherType')"> Type <i *ngIf="sortColumn==='voucherType'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+              <th class="text-end" style="cursor:pointer;" (click)="sortTable('debit')"> Debit <i *ngIf="sortColumn==='debit'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+              <th class="text-end" style="cursor:pointer;" (click)="sortTable('credit')"> Credit <i *ngIf="sortColumn==='credit'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+              <th style="text-align:left;">Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="glOpeningBalance !== 0" class="fw-bold" style="background-color:#EDF6EB; position:sticky; top:38px; z-index:1;">
+              <td colspan="3" style="text-align:right;">Opening Balance</td>
+              <td class="text-end">{{ glOpeningDebit > 0 ? (glOpeningDebit | number:'1.2-2') : '0.00' }}</td>
+              <td class="text-end">{{ glOpeningCredit > 0 ? (glOpeningCredit | number:'1.2-2') : '0.00' }}</td>
+              <td></td>
+            </tr>
+            <tr *ngFor="let g of filteredGlDetails; trackBy: trackByGLRow">
+              <td style="text-align:left;">
+                <a href="#" (click)="onGLVoucherClick(g); $event.preventDefault();">
+                  <span [innerHTML]="highlightText(g.voucherNumber)"></span>
+                </a>
+              </td>
+              <td style="text-align:left;">{{ g.voucherDate | date:'dd-MM-yyyy' }}</td>
+              <td style="text-align:left;"><span [innerHTML]="highlightText(g.voucherType)"></span></td>
+              <td class="text-end">{{ g.debit | number:'1.2-2' }}</td>
+              <td class="text-end">{{ g.credit | number:'1.2-2' }}</td>
+              <td style="text-align:left;"><span [innerHTML]="highlightText(g.lineDetails)"></span></td>
+            </tr>
+          </tbody>
+          <tfoot class="bglightgreen fw-bold">
+            <tr>
+              <td colspan="3" style="text-align:right; background-color:#4EAA39; color: white;">Total</td>
+              <td style="text-align:right; background-color:#4EAA39; color: white;">{{ totalglDebit | number:'1.2-2' }}</td>
+              <td style="text-align:right; background-color:#4EAA39; color: white;">{{ totalglCredit | number:'1.2-2' }}</td>
+              <td style="background-color:#4EAA39;"></td>
+            </tr>
+            <tr>
+              <td colspan="3" style="text-align:right; background-color:#4EAA39; color: white;">Closing Balance</td>
+              <td style="text-align:right; background-color:#4EAA39; color: white;">{{ glClosingDebit > 0 ? (glClosingDebit | number:'1.2-2') : '0.00' }}</td>
+              <td style="text-align:right; background-color:#4EAA39; color: white;">{{ glClosingCredit > 0 ? (glClosingCredit | number:'1.2-2') : '0.00' }}</td>
+              <td style="background-color:#4EAA39;"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+    <div *ngIf="activeTab==='subledgerSchedule'">
+      <div class="table-responsive mb-3" style="height:60vh; max-height:60vh; overflow:auto;">
+        <table class="table table-group align-middle mb-0 subledger-schedule-table">
+          <thead class="table-light sticky-header">
+            <tr>
+              <th style="text-align:left; cursor:pointer;" (click)="sortTable('accountCode')"> Account Code <i *ngIf="sortColumn==='accountCode'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+              <th style="text-align:left; cursor:pointer;" (click)="sortTable('description')"> Description <i *ngIf="sortColumn==='description'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+              <th style="text-align:left; cursor:pointer;" (click)="sortTable('subAccountCode')"> SubAccount Code <i *ngIf="sortColumn==='subAccountCode'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+              <th style="text-align:left; cursor:pointer;" (click)="sortTable('subCodeDescription')"> SubAccount Description <i *ngIf="sortColumn==='subCodeDescription'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+              <th class="text-end" style="cursor:pointer;" (click)="sortTable('debit')"> Debit <i *ngIf="sortColumn==='debit'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+              <th class="text-end" style="cursor:pointer;" (click)="sortTable('credit')"> Credit <i *ngIf="sortColumn==='credit'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of filteredSubledgerSchedule; trackBy: trackBySubSchedule">
+              <td style="text-align:left;"><span [innerHTML]="highlightText(s.accountCode)"></span></td>
+              <td style="text-align:left;"><span [innerHTML]="highlightText(s.description)"></span></td>
+              <td style="text-align:left;">
+                <a href="#" (click)="onSubledgerScheduleClick(s); $event.preventDefault();"> {{ s.subAccountCode }} </a>
+              </td>
+              <td style="text-align:left;"><span [innerHTML]="highlightText(s.subCodeDescription)"></span></td>
+              <td class="text-end">{{ s.debit | number:'1.2-2' }}</td>
+              <td class="text-end">{{ s.credit | number:'1.2-2' }}</td>
+            </tr>
+          </tbody>
+          <tfoot class="bglightgreen fw-bold">
+            <tr>
+              <td colspan="4" style="text-align:right; background-color:#4EAA39; color: white;">Total</td>
+              <td style="text-align:right; background-color:#4EAA39; color: white;">{{ totalslDebit | number:'1.2-2' }}</td>
+              <td style="text-align:right; background-color:#4EAA39; color: white;">{{ totalslCredit | number:'1.2-2' }}</td>
+            </tr>
+            <tr>
+              <td colspan="4" style="text-align:right; background-color:#4EAA39; color: white;">Net Balance</td>
+              <td style="text-align:right; background-color:#4EAA39; color: white;">{{ (totalslDebit - totalslCredit) > 0 ? (totalslDebit - totalslCredit | number:'1.2-2') : '0.00' }}</td>
+              <td style="text-align:right; background-color:#4EAA39; color: white;">{{ (totalslCredit - totalslDebit) > 0 ? (totalslCredit - totalslDebit | number:'1.2-2') : '0.00' }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+    <div *ngIf="activeTab==='subledgerAccount'">
+      <div class="table-responsive mb-3" style="height:60vh; max-height:60vh; overflow:auto;">
+        <table class="table table-group align-middle mb-0 subledger-account-table">
+          <thead class="table-light sticky-header">
+            <tr>
+              <th style="text-align:left; cursor:pointer;" (click)="sortTable('voucherNumber')"> Voucher No <i *ngIf="sortColumn==='voucherNumber'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+              <th style="text-align:left; cursor:pointer;" (click)="sortTable('voucherDate')"> Voucher Date <i *ngIf="sortColumn==='voucherDate'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+              <th style="text-align:left; cursor:pointer;" (click)="sortTable('invoiceNo')"> Invoice No <i *ngIf="sortColumn==='invoiceNo'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+              <th style="text-align:left; cursor:pointer;" (click)="sortTable('invoiceDate')"> Invoice Date <i *ngIf="sortColumn==='invoiceDate'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+              <th class="text-end" style="cursor:pointer;" (click)="sortTable('debit')"> Debit <i *ngIf="sortColumn==='debit'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+              <th class="text-end" style="cursor:pointer;" (click)="sortTable('credit')"> Credit <i *ngIf="sortColumn==='credit'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="subledgerOpeningBalance !== 0" class="fw-bold" style="background-color:#EDF6EB; position:sticky; top:38px; z-index:1;">
+              <td colspan="4" style="text-align:right;">Opening Balance</td>
+              <td class="text-end">{{ subledgerOpeningDebit > 0 ? (subledgerOpeningDebit | number:'1.2-2') : '0.00' }}</td>
+              <td class="text-end">{{ subledgerOpeningCredit > 0 ? (subledgerOpeningCredit | number:'1.2-2') : '0.00' }}</td>
+            </tr>
+            <tr *ngFor="let a of filteredSubledgerAccount; trackBy: trackBySubAccount">
+              <td style="text-align:left;">
+                <a href="#" (click)="onVoucherNumberClick(a); $event.preventDefault();">
+                  <span [innerHTML]="highlightText(a.voucherNumber)"></span>
+                </a>
+              </td>
+              <td style="text-align:left;">{{ a.voucherDate | date:'dd-MM-yyyy' }}</td>
+              <td style="text-align:left;"><span [innerHTML]="highlightText(a.invoiceNo)"></span></td>
+              <td style="text-align:left;">{{ a.invoiceDate | date:'dd-MM-yyyy' }}</td>
+              <td class="text-end">{{ a.debit | number:'1.2-2' }}</td>
+              <td class="text-end">{{ a.credit | number:'1.2-2' }}</td>
+            </tr>
+          </tbody>
+          <tfoot class="bglightgreen fw-bold">
+            <tr>
+              <td colspan="4" style="text-align:right; background-color:#4EAA39; color: white;">Total</td>
+              <td style="text-align:right; background-color:#4EAA39; color: white;">{{ totalslaDebit | number:'1.2-2' }}</td>
+              <td style="text-align:right; background-color:#4EAA39; color: white;">{{ totalslaCredit | number:'1.2-2' }}</td>
+            </tr>
+            <tr>
+              <td colspan="4" style="text-align:right; background-color:#4EAA39; color: white;">Closing Balance</td>
+              <td style="text-align:right; background-color:#4EAA39; color: white;">{{ subledgerClosingDebit > 0 ? (subledgerClosingDebit | number:'1.2-2') : '0.00' }}</td>
+              <td style="text-align:right; background-color:#4EAA39; color: white;">{{ subledgerClosingCredit > 0 ? (subledgerClosingCredit | number:'1.2-2') : '0.00' }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+    <div *ngIf="activeTab==='billsPayments'">
+      <div class="table-responsive mb-3" style="height:60vh; max-height:60vh; overflow:auto;" style="height:65vh; max-height:65vh; overflow:auto;">
+        <table class="table table-group align-middle mb-0 bills-payments-table">
+          <thead class="table-light sticky-header">
+            <tr>
+              <th style="text-align:left; cursor:pointer;" (click)="sortTable('nature')"> Nature <i *ngIf="sortColumn==='nature'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+              <th style="text-align:left; cursor:pointer;" (click)="sortTable('voucherNumber')"> Voucher No <i *ngIf="sortColumn==='voucherNumber'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+              <th style="text-align:left; cursor:pointer;" (click)="sortTable('voucherDate')"> Date <i *ngIf="sortColumn==='voucherDate'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+              <th style="text-align:left; cursor:pointer;" (click)="sortTable('billNo')"> Inward No <i *ngIf="sortColumn==='billNo'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+              <th style="text-align:left; cursor:pointer;" (click)="sortTable('billNo')"> Bill No <i *ngIf="sortColumn==='billNo'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+              <th style="text-align:left; cursor:pointer;" (click)="sortTable('billNo')"> Bill Due Date <i *ngIf="sortColumn==='billNo'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+              <th class="text-end" style="cursor:pointer;" (click)="sortTable('billBalance')"> Balance/Amount <i *ngIf="sortColumn==='billBalance'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+              <th style="text-align:left; cursor:pointer;" (click)="sortTable('voucherNarration')"> Narration <i *ngIf="sortColumn==='voucherNarration'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let b of filteredBillsPayments; trackBy: trackByBill">
+              <td style="text-align:left;"><span [innerHTML]="highlightText(b.nature)"></span></td>
+              <td style="text-align:left;"><span [innerHTML]="highlightText(b.voucherNumber)"></span></td>
+              <td style="text-align:left;">{{ b.voucherDate | date:'dd-MM-yyyy' }}</td>
+              <td style="text-align:left;"><span [innerHTML]="highlightText(b.billNo)"></span></td>
+              <td style="text-align:left;"><span [innerHTML]="highlightText(b.billNo)"></span></td>
+              <td style="text-align:left;">{{ b.billDate | date:'dd-MM-yyyy' }}</td>
+              <td class="text-end">{{ b.billBalance | number:'1.2-2' }}</td>
+              <td style="text-align:left;"><span [innerHTML]="highlightText(b.voucherNarration)"></span></td>
+            </tr>
+          </tbody>
+          <tfoot class="bglightgreen fw-bold" *ngIf="filteredBillsPayments.length">
+            <tr>
+              <td colspan="6" style="text-align:right; background-color:#4EAA39; color: white;">Total Bills</td>
+              <td style="text-align:right; background-color:#4EAA39; color: white;">{{ totalBills | number:'1.2-2' }}</td>
+              <td style="background-color:#4EAA39;"></td>
+            </tr>
+            <tr *ngIf="totalPayments !== 0">
+              <td colspan="6" style="text-align:right; background-color:#4EAA39; color: white;">Total Payments</td>
+              <td style="text-align:right; background-color:#4EAA39; color: white;">{{ totalPayments | number:'1.2-2' }}</td>
+              <td style="background-color:#4EAA39;"></td>
+            </tr>
+            <tr>
+              <td colspan="6" style="text-align:right; background-color:#4EAA39; color: white;">Total for Party</td>
+              <td style="text-align:right; background-color:#4EAA39; color: white;">{{ totalForParty | number:'1.2-2' }}</td>
+              <td style="background-color:#4EAA39;"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showVoucherPopup" (click)="closeVoucherPopup()"></div>
+<div class="modal fade show d-block" tabindex="-1" role="dialog" *ngIf="showVoucherPopup">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document">
+    <div class="modal-content" style="min-height: 65vh;">
+      <div class="modal-header">
+        <h6 class="modal-title fs-5"> Voucher Details for : {{ voucherPopupTitle }}&nbsp;&nbsp;dated&nbsp;&nbsp;{{ voucherPopupDateRaw }} </h6>
+        <button type="button" class="btn-close" (click)="closeVoucherPopup()"></button>
+      </div>
+      <div class="modal-body p-3">
+        <div class="table-responsive" style="height:45vh; max-height:45vh; overflow:auto;">
+          <table class="table table-borderless mb-0">
+            <thead class="table-light sticky-header">
+              <tr>
+                <th style="text-align:left; width:45%;">Account Description / Line Particulars</th>
+                <th style="text-align:left; width:20%;">Inst.no/Date</th>
+                <th class="text-end" style="width:17%;">Debit</th>
+                <th class="text-end" style="width:18%;">Credit</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let entry of voucherEntries; trackBy: trackByVoucherEntry">
+                <td style="text-align:left;">
+                  <div>{{ entry.accountCode }} {{ entry.description }}</div>
+                  <div *ngIf="entry.lineDetails" class="text-muted small">{{ entry.lineDetails }}</div>
+                  <div *ngIf="entry.subAccountCode" class="small"> {{ entry.subAccountCode }} : {{ entry.subCodeDescription }} </div>
+                </td>
+                <td style="text-align:left;">
+                  <span *ngIf="entry.instrumentNo">{{ entry.instrumentNo }}</span>
+                  <span *ngIf="entry.instrumentDate"><br>{{ entry.instrumentDate | date:'dd-MM-yyyy' }}</span>
+                </td>
+                <td class="text-end">
+                  <span *ngIf="entry.debit">{{ entry.debit | number:'1.2-2' }}</span>
+                </td>
+                <td class="text-end">
+                  <span *ngIf="entry.credit">{{ entry.credit | number:'1.2-2' }}</span>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot class="fw-bold">
+              <tr>
+                <td colspan="2" style="text-align:right; background-color:#4EAA39; color:white;"> Voucher Totals </td>
+                <td style="text-align:right; background-color:#4EAA39; color:white;"> {{ voucherTotalDebit | number:'1.2-2' }} </td>
+                <td style="text-align:right; background-color:#4EAA39; color:white;"> {{ voucherTotalCredit | number:'1.2-2' }} </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div *ngIf="voucherNarration" class="mt-2 px-1">
+          <strong style="color:green;">Narration : </strong>
+          <span>{{ voucherNarration }}</span>
+        </div>
+      </div>
+      <div class="modal-footer d-flex justify-content-between">
+        <div class="d-flex gap-2 flex-wrap">
+          <button type="button" class="btn btn-primary" (click)="onBillsPaymentsAdjusted()"> Bills/Payments Adjusted </button>
+          <button type="button" class="btn btn-primary" (click)="onViewCostProduct()"> View Cost/Product </button>
+          <button type="button" class="btn btn-primary" style="width:90px;" [disabled]="!voucherEntries.length" (click)="downloadVoucherPdf()">
+            <i class="fa fa-download me-1"></i> PDF </button>
+          <button type="button" class="btn btn-primary" style="width:90px;" [disabled]="!voucherEntries.length" (click)="downloadVoucherExcel()">
+            <i class="fa fa-download me-1"></i> Excel </button>
+        </div>
+        <button type="button" class="btn btn-primary" style="width:90px;" (click)="closeVoucherPopup()">Ok</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showCostProductPopup" (click)="closeCostProductPopup()"></div>
+<div class="modal fade show d-block" tabindex="-1" role="dialog" *ngIf="showCostProductPopup">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document">
+    <div class="modal-content" style="min-height: 65vh;">
+      <div class="modal-header">
+        <h6 class="modal-title fs-5">Cost / Product Entries</h6>
+        <button type="button" class="btn-close" (click)="closeCostProductPopup()"></button>
+      </div>
+      <div class="modal-body p-3">
+        <div *ngIf="costProductEntries.length === 0" class="text-muted text-center py-3"> No cost/product entries found. </div>
+        <div *ngIf="costProductEntries.length > 0">
+          <table class="table table-sm table-borderless mb-0">
+            <thead>
+              <tr>
+                <th style="text-align:left; width:60%;">Dept. Cde Description</th>
+                <th class="text-end" style="width:40%;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngFor="let group of costProductGrouped">
+                <tr>
+                  <td colspan="2" class="fw-bold pt-3" style="color:green;"> {{ group.accountCode }} : {{ group.description }} </td>
+                </tr>
+                <tr *ngFor="let item of group.items">
+                  <td style="text-align:left; padding-left:20px;"> {{ item.costCentreCode }}&nbsp;&nbsp;&nbsp;&nbsp;{{ item.costCentreDescription }} </td>
+                  <td class="text-end">{{ item.voucherAmount | number:'1.2-2' }}</td>
+                </tr>
+                <tr class="fw-bold">
+                  <td style="text-align:right; background-color:#4EAA39; color: white;">Account Total</td>
+                  <td style="text-align:right; background-color:#4EAA39; color: white;">{{ group.total | number:'1.2-2' }}</td>
+                </tr>
+              </ng-container>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer d-flex justify-content-between">
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-primary" style="width:90px;" [disabled]="costProductEntries.length === 0" (click)="downloadCostProductPdf()">
+            <i class="fa fa-download me-1"></i> PDF </button>
+          <button type="button" class="btn btn-primary" style="width:90px;" [disabled]="costProductEntries.length === 0" (click)="exportCostProductToExcel()">
+            <i class="fa fa-download me-1"></i> Excel </button>
+        </div>
+        <button type="button" class="btn btn-primary" style="width:90px;" (click)="closeCostProductPopup()">Ok</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showBillsAdjustedPopup" (click)="closeBillsAdjustedPopup()"></div>
+<div class="modal fade show d-block" tabindex="-1" role="dialog" *ngIf="showBillsAdjustedPopup">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document">
+    <div class="modal-content" style="min-height: 65vh;">
+      <div class="modal-header">
+        <h6 class="modal-title fs-5"> Bills/Payments Adjusted Details &nbsp;—&nbsp; <span>{{ voucherPopupTitle }}</span>
+        </h6>
+        <button type="button" class="btn-close" (click)="closeBillsAdjustedPopup()"></button>
+      </div>
+      <div class="modal-body p-3">
+        <div *ngIf="billsAdjustedLoading" class="text-center py-3">
+          <span class="spinner-border spinner-border-sm text-primary me-2"></span> Loading bills/payments adjusted details...
+        </div>
+        <div class="table-responsive" *ngIf="!billsAdjustedLoading && billsAdjustedRows.length > 0" style="height:50vh; max-height:50vh; overflow:auto;">
+          <table class="table table-borderless mb-0">
+            <thead class="table-light sticky-header">
+              <tr>
+                <th style="text-align:left;">Voucher Number</th>
+                <th style="text-align:left;">Voucher Date</th>
+                <th style="text-align:left;">Reference Number</th>
+                <th style="text-align:left;">Reference Date</th>
+                <th style="text-align:left;">Bill Number</th>
+                <th style="text-align:left;">Bill Date</th>
+                <th class="text-end">Bill Adjusted Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of billsAdjustedRows; trackBy: trackByBillsAdjusted">
+                <td style="text-align:left;">{{ row.voucherNumber }}</td>
+                <td style="text-align:left;">{{ row.voucherDate | date:'dd-MM-yyyy' }}</td>
+                <td style="text-align:left;">{{ row.referenceNumber }}</td>
+                <td style="text-align:left;">{{ row.referenceDate | date:'dd-MM-yyyy' }}</td>
+                <td style="text-align:left;">{{ row.billNumber }}</td>
+                <td style="text-align:left;">{{ row.billDate | date:'dd-MM-yyyy' }}</td>
+                <td class="text-end">{{ row.billAdjustedAmount | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div *ngIf="!billsAdjustedLoading && billsAdjustedRows.length === 0" class="text-center text-muted py-3"> No bills/payments adjusted entries found for this voucher. </div>
+      </div>
+      <div class="modal-footer d-flex justify-content-between">
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-primary" style="width:90px;" [disabled]="billsAdjustedRows.length === 0" (click)="downloadBillsAdjustedPdf()">
+            <i class="fa fa-download me-1"></i> PDF </button>
+          <button type="button" class="btn btn-primary" style="width:90px;" [disabled]="billsAdjustedRows.length === 0" (click)="exportBillsAdjustedToExcel()">
+            <i class="fa fa-download me-1"></i> Excel </button>
+        </div>
+        <button type="button" class="btn btn-primary" style="width:90px;" (click)="closeBillsAdjustedPopup()">Ok</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div *ngIf="isLoading" class="spinner-overlay">
+  <div class="spinner"></div>
+</div>

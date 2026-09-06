@@ -1,0 +1,126 @@
+<div class="mt-3" [formGroup]="form">
+    <div class="bglightgreen p-3 mb-3">
+        <div class="row d-flex align-items-center">
+            <div class="col-md-12" [formGroup]="header">
+                <div class="row">
+                    <div class="col-md-2">
+                        <label class="form-label">Financial Year <span class="text-danger">*</span></label>
+                        <select tabIndex="0" class="form-select" formControlName="year" (change)="onYearChange()" [ngClass]="{'is-invalid': header.get('year')?.invalid && (header.get('year')?.touched || header.get('year')?.dirty)}">
+                            <option *ngFor="let year of years" [ngValue]="year.financialyear"> {{ year.financialyear }} </option>
+                        </select>
+                        <div class="invalid-feedback d-block" *ngIf="header.get('year')?.invalid && (header.get('year')?.touched || header.get('year')?.dirty)"> Year is required. </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Month <span class="text-danger">*</span></label>
+                        <select tabIndex="0" class="form-select" formControlName="month" (change)="onMonthChange()" [ngClass]="{'is-invalid': header.get('month')?.invalid && (header.get('month')?.touched || header.get('month')?.dirty)}">
+                            <option *ngFor="let m of months" [ngValue]="m.accperiod"> {{ m.accmonth }} - {{ m.accyear }} </option>
+                        </select>
+                        <div class="invalid-feedback d-block" *ngIf="header.get('month')?.invalid && (header.get('month')?.touched || header.get('month')?.dirty)"> Month is required. </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="bank" class="form-label">Account <span class="text-danger">*</span></label>
+                        <app-searchable-select id="bank" class="form-select" tabIndex="0" formControlName="bank" [items]="banks" bindValue="bankCode" [displayWith]="bankLabel" placeholder="Select Account" nullOptionLabel="Select Account" [searchable]="true" dropdownPosition="bottom">
+                        </app-searchable-select>
+                        <div class="invalid-feedback d-block" *ngIf="header.get('bank')?.invalid && (header.get('bank')?.touched || header.get('bank')?.dirty)"> Account is required. </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="bankAccount" class="form-label">Sub Account <span class="text-danger">*</span></label>
+                        <app-searchable-select id="bankAccount" class="form-select" tabIndex="0" (selectionChange)="onBankAccountChange()" formControlName="bankAccount" [items]="bankAccounts" bindValue="accountCode" [displayWith]="accountLabel" placeholder="Select Sub Account" nullOptionLabel="Select Sub Account" [searchable]="true" dropdownPosition="bottom">
+                        </app-searchable-select>
+                        <div class="invalid-feedback d-block" *ngIf="header.get('bankAccount')?.invalid && (header.get('bankAccount')?.touched || header.get('bankAccount')?.dirty)"> Sub Account is required. </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="bglightgreen p-3 mb-3" *ngIf="isSubAccountSelected">
+        <div class="flex-grow-1">
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2 ">
+                <div>
+                    <h6 class=" fw-semibold mb-0">Outstanding bills details</h6>
+                </div>
+            </div>
+        </div>
+        <div class="table-responsive voucher-detail-table">
+            <table class="table table-hover align-middle table-fixed" width="100%">
+                <thead class="table-light sticky-header">
+                    <tr>
+                        <th (click)="sortBillTable('voucherNo')" style="cursor:pointer"> Voucher No <i *ngIf="sortColumn==='voucherNo'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i>
+                        </th>
+                        <th (click)="sortBillTable('billDate')" style="cursor:pointer">Bill Date<i *ngIf="sortColumn === 'billDate'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i></th>
+                        <th (click)="sortBillTable('billNo')" style="cursor:pointer">Bill No<i *ngIf="sortColumn === 'billNo'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i></th>
+                        <th class="text-end" (click)="sortBillTable('billAmount')" style="cursor:pointer"> Amount </th>
+                        <th class="text-end" (click)="sortBillTable('amountAdjusted')" style="cursor:pointer"> Amount Adjusted </th>
+                        <th class="text-end" (click)="sortBillTable('balanceAmount')" style="cursor:pointer"> Balance Amount </th>
+                        <th (click)="sortBillTable('particulars')" style="cursor:pointer"> Particulars <i *ngIf="sortColumn === 'particulars'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let item of billList">
+                        <td>
+                            <a href="#" (click)="onVoucherRowClick(item); $event.preventDefault()"> {{ item.voucherNo }} </a>
+                        </td>
+                        <td>{{ item.billDate | date:'dd/MM/yyyy' }}</td>
+                        <td>{{ item.billNo }}</td>
+                        <td class="text-end">{{ item.billAmount | number:'1.2-2' }}</td>
+                        <td class="text-end">{{ item.amountAdjusted | number:'1.2-2' }}</td>
+                        <td class="text-end">{{ item.balanceAmount | number:'1.2-2' }}</td>
+                        <td>{{ item.particulars }}</td>
+                    </tr>
+                    <tr *ngIf="!billList.length">
+                        <td colspan="7" class="text-center text-muted"> No bills found for this Account & Sub Account. </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="bglightgreen p-3 mb-3" *ngIf="isSubAccountSelected && showUnadjustedPayments">
+        <div class="flex-grow-1">
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2 ">
+                <div>
+                    <h6 class="fw-semibold mb-2"> Unadjusted payments details <span class="text-muted">(Voucher No : {{ selectedBillVoucherNo }})</span></h6>
+                </div>
+                <div>
+                    <h6 class="text-muted"> Remaining Bill Balance: {{ remainingBillBalance | number:'1.2-2' }} </h6>
+                </div>
+            </div>
+        </div>
+        <div class="table-responsive voucher-detail-table">
+            <table class="table table-hover align-middle table-fixed">
+                <thead class="table-light sticky-header">
+                    <tr>
+                        <th (click)="sortPaymentTable('voucherNo')" style="cursor:pointer">Voucher No<i *ngIf="sortColumn === 'voucherNo'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i></th>
+                        <th (click)="sortPaymentTable('voucherDate')" style="cursor:pointer">Voucher Date<i *ngIf="sortColumn === 'voucherDate'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i></th>
+                        <th (click)="sortPaymentTable('particulars')" style="cursor:pointer">Particulars<i *ngIf="sortColumn === 'particulars'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i></th>
+                        <th class="text-end" (click)="sortPaymentTable('billAmount')" style="cursor:pointer"> Amount </th>
+                        <th class="text-end" (click)="sortPaymentTable('amountAdjusted')" style="cursor:pointer"> Amount Adjusted </th>
+                        <th class="text-end" (click)="sortPaymentTable('balanceAmount')" style="cursor:pointer"> Balance Amount</th>
+                        <th class="text-end"> Accepted Amount </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let item of paymentList">
+                        <td>{{ item.voucherNo }}</td>
+                        <td>{{ item.voucherDate | date:'dd/MM/yyyy' }}</td>
+                        <td>{{ item.particulars }}</td>
+                        <td class="text-end">{{ item.paymentAmount | number:'1.2-2' }}</td>
+                        <td class="text-end">{{ item.amountAdjusted | number:'1.2-2' }}</td>
+                        <td class="text-end">{{ item.balanceAmount | number:'1.2-2' }}</td>
+                        <td class="text-end" style="width:140px">
+                            <input type="text" class="form-control form-control-sm" [value]="item.acceptedAmount" (input)="onPaymentInputChange($event,item)" (blur)="onPaymentAcceptedBlur(item)">
+                        </td>
+                    </tr>
+                    <tr *ngIf="!paymentList.length">
+                        <td colspan="7" class="text-center text-muted"> No payments found for selected Voucher No. </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="text-end mt-3" *ngIf="showUnadjustedPayments">
+            <button class="btn btn-primary" (click)="onSaveAdjustment()" [disabled]="remainingBillBalance === selectedBillBalance"> Save Adjustment </button>
+        </div>
+    </div>
+</div>
+<div *ngIf="isLoading" class="spinner-overlay">
+    <div class="spinner"></div>
+</div>

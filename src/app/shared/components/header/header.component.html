@@ -1,0 +1,31 @@
+<header id="header" class="header dashboard">
+  <!-- <div class="topbar d-flex align-items-center">
+    <div class="d-flex align-items-center justify-content-between w-100 px-2">
+      <div class="contact-info d-flex align-items-center">
+        <i class="bi bi-envelope d-flex align-items-center ms-2 text-white">
+          <a href="mailto:support@eCOFIN.com">support&#64;ecofin.com</a>
+        </i>
+      </div>
+      <div class="social-links align-items-center d-none d-md-block">
+        <a href="#" class="facebook"><i class="bi bi-facebook"></i></a>
+        <a href="#" class="twitter"><i class="bi bi-twitter-x"></i></a>
+        <a href="#" class="instagram"><i class="bi bi-instagram"></i></a>
+        <a href="#" class="youtube"><i class="bi bi-youtube"></i></a>
+      </div>
+    </div>
+  </div> -->
+  <div class="branding d-flex align-items-center px-2">
+    <div class="fw-bold page-title ps-2">{{ menuTitle }} </div>
+    <div class="dropdown profiledrop">
+      <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <img src="assets/img/profiles.png">
+        <span class="ellipse mw-120" title="{{ userName }}"> {{ userName }} </span>
+      </button>
+      <ul class="dropdown-menu">
+        <li class="nav-item"><a class="dropdown-item" routerLink="/myprofile">Profile</a></li>
+        <li class="nav-item"><a class="dropdown-item" routerLink="/changepassword">Change Password</a></li>
+        <li class="nav-item"><a class="dropdown-item pointer" (click)="logout()">Logout</a></li>
+      </ul>
+    </div>
+  </div>
+</header>

@@ -1,0 +1,7 @@
+.wrapper{display: flex; flex-direction: column; min-height: 100vh;}
+.index-page{flex:1;}
+@media (min-width:991px){
+    .row.contenttop {
+        min-height: 100vh; 
+    }
+}

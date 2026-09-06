@@ -1,0 +1,103 @@
+<div class="p-3">
+    <form [formGroup]="filterForm" novalidate>
+        <div class="bglightgreen p-3 mb-3">
+            <div class="row align-items-start">
+                <div class="col-md-2">
+                    <label class="form-label mb-1">From Date <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" formControlName="fromDate" [max]="today" [ngClass]="{'is-invalid': isInvalid('fromDate')}" />
+                    <div class="invalid-feedback d-block" *ngIf="hasError('fromDate','required')">From Date is required.</div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label mb-1">To Date <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" formControlName="toDate" [max]="today" [ngClass]="{'is-invalid': isInvalid('toDate')}" />
+                    <div class="invalid-feedback d-block" *ngIf="hasError('toDate','required')">To Date is required.</div>
+                    <div class="invalid-feedback d-block" *ngIf="filterForm.get('toDate')?.hasError('dateInvalid')"> To Date must be ≥ From Date. </div>
+                </div>
+                <div class="col-md-8 d-flex align-items-end mt-4 gap-2 flex-wrap">
+                    <button type="button" class="btn btn-primary" style="width:90px;" (click)="onRetrieve()">Load</button>
+                    <button type="button" class="btn btn-primary" style="width:90px;" (click)="onClose()">Clear</button>
+                    <ng-container *ngIf="reportRows.length > 0">
+                        <button type="button" class="btn btn-primary" style="width:90px;" (click)="downloadPdf()">
+                            <i class="fa fa-download me-1"></i> PDF </button>
+                        <button type="button" class="btn btn-primary" style="width:90px;" (click)="downloadExcel()">
+                            <i class="fa fa-download me-1"></i> Excel </button>
+                    </ng-container>
+                </div>
+            </div>
+        </div>
+    </form>
+    <!-- ── Report table ──────────────────────────────────────────────────── -->
+    <div class="table-responsive" *ngIf="reportRows.length > 0" style="height:65vh; max-height:65vh; overflow-x:auto; overflow-y:auto;">
+        <table class="table table-borderless mb-0" style="min-width: 2400px;">
+            <thead class="table-light sticky-header">
+                <tr>
+                    <th style="text-align:left;  width:8%;">PJV No</th>
+                    <th style="text-align:left;  width:7%;">PJV Date</th>
+                    <th style="text-align:left;  width:12%;">GIN No</th>
+                    <th style="text-align:left;  width:7%;">GIN Date</th>
+                    <th style="text-align:left;  width:14%;">Party</th>
+                    <th style="text-align:left;  width:10%;">Invoice No</th>
+                    <th style="text-align:left;  width:7%;">Inv Date</th>
+                    <th style="text-align:left;  width:12%;">Item Description</th>
+                    <th style="text-align:right; width:7%;">Basic Value</th>
+                    <th style="text-align:right; width:5%;">Excise Duty</th>
+                    <th style="text-align:right; width:4%;">ED Cess</th>
+                    <th style="text-align:right; width:4%;">HED Cess</th>
+                    <th style="text-align:right; width:4%;">Others</th>
+                    <th style="text-align:right; width:5%;">Rate of Tax</th>
+                    <th style="text-align:right; width:5%;">VAT</th>
+                    <th style="text-align:right; width:5%;">Non VAT</th>
+                    <th style="text-align:right; width:5%;">CST</th>
+                    <th style="text-align:right; width:7%;">Total</th>
+                    <th style="text-align:left;  width:5%;">VAT Type</th>
+                    <th style="text-align:left;  width:7%;">CST No</th>
+                    <th style="text-align:left;  width:7%;">TIN No</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let row of reportRows">
+                    <td style="text-align:left;">{{ row.pjvNumber }}</td>
+                    <td style="text-align:left;">{{ row.pjvDate | date:'dd/MM/yyyy' }}</td>
+                    <td style="text-align:left;">{{ row.ginNumber }}</td>
+                    <td style="text-align:left;">{{ row.ginDate | date:'dd/MM/yyyy' }}</td>
+                    <td style="text-align:left;">{{ row.party }}</td>
+                    <td style="text-align:left;">{{ row.invoiceNo }}</td>
+                    <td style="text-align:left;">{{ row.invoiceDate | date:'dd/MM/yyyy' }}</td>
+                    <td style="text-align:left;">{{ row.itemDescription }}</td>
+                    <td style="text-align:right;">{{ row.basicValue | number:'1.2-2' }}</td>
+                    <td style="text-align:right;">{{ row.exciseDuty | number:'1.2-2' }}</td>
+                    <td style="text-align:right;">{{ row.edCess | number:'1.2-2' }}</td>
+                    <td style="text-align:right;">{{ row.hedCess | number:'1.2-2' }}</td>
+                    <td style="text-align:right;">{{ row.others | number:'1.2-2' }}</td>
+                    <td style="text-align:right;">{{ row.rateOfTax | number:'1.2-2' }}</td>
+                    <td style="text-align:right;">{{ row.vat | number:'1.2-2' }}</td>
+                    <td style="text-align:right;">{{ row.nonVat | number:'1.2-2' }}</td>
+                    <td style="text-align:right;">{{ row.cst | number:'1.2-2' }}</td>
+                    <td style="text-align:right;">{{ row.total | number:'1.2-2' }}</td>
+                    <td style="text-align:left;">{{ row.vatType }}</td>
+                    <td style="text-align:left;">{{ row.cstNo }}</td>
+                    <td style="text-align:left;">{{ row.tinNo }}</td>
+                </tr>
+            </tbody>
+            <tfoot class="table-light fw-bold">
+                <tr>
+                    <td colspan="8" style="text-align:right; background-color:#4EAA39; color:white;">Totals</td>
+                    <td style="text-align:right; background-color:#4EAA39; color:white;">{{ totalBasicValue | number:'1.2-2' }}</td>
+                    <td style="text-align:right; background-color:#4EAA39; color:white;">{{ totalExciseDuty | number:'1.2-2' }}</td>
+                    <td style="text-align:right; background-color:#4EAA39; color:white;">{{ totalEdCess | number:'1.2-2' }}</td>
+                    <td style="text-align:right; background-color:#4EAA39; color:white;">{{ totalHedCess | number:'1.2-2' }}</td>
+                    <td style="text-align:right; background-color:#4EAA39; color:white;">{{ totalOthers | number:'1.2-2' }}</td>
+                    <td style="text-align:right; background-color:#4EAA39; color:white;"></td>
+                    <td style="text-align:right; background-color:#4EAA39; color:white;">{{ totalVat | number:'1.2-2' }}</td>
+                    <td style="text-align:right; background-color:#4EAA39; color:white;">{{ totalNonVat | number:'1.2-2' }}</td>
+                    <td style="text-align:right; background-color:#4EAA39; color:white;">{{ totalCst | number:'1.2-2' }}</td>
+                    <td style="text-align:right; background-color:#4EAA39; color:white;">{{ totalAmount | number:'1.2-2' }}</td>
+                    <td colspan="3" style="background-color:#4EAA39; color:white;"></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+<div *ngIf="isLoading" class="spinner-overlay">
+    <div class="spinner"></div>
+</div>

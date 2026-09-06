@@ -1,0 +1,13 @@
+.ss-container { position: relative; width: 100%; }
+.ss-control { cursor: pointer; user-select: none; padding:1px; border-radius: 4px; border: 0px solid #ced4da; background: #fff; }
+.ss-control.disabled { opacity: 0.6; cursor: not-allowed; }
+.ss-control.open { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.ss-caret { opacity: 0; margin-left: 0px; }
+.ss-panel { position: absolute; z-index: 2000; background: #fff; box-shadow: 0 6px 20px #00000014; border-radius: 0px; overflow: hidden; padding: 0px; width: max-content; min-width: 100%; white-space: nowrap; left: -7px; right: auto; }
+.ss-list { max-height: 240px; overflow-y: auto; }
+.ss-item { padding: 6px 10px; cursor: pointer; border-radius: 4px; text-align: left; }
+.ss-item:hover, .ss-item.highlight { background:rgba(78, 170, 57, 0.1) !important }
+.ss-null-option { font-weight: 600; color: #333; background: transparent; border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 6px; margin-bottom: 6px; }
+.ss-panel-bottom { top: 100%; margin-top: 7px; }
+.ss-panel-top { bottom: 100%; margin-bottom: 7px; }
+.ss-panel input::placeholder { color: #d0d0d0 !important;}

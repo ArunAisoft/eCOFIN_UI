@@ -1,0 +1,136 @@
+<div class="p-3">
+  <form [formGroup]="instrForm" novalidate>
+    <div class="bglightgreen p-3 mb-3">
+      <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+        <h6 class="fw-semibold mb-0">Bank Instrument</h6>
+      </div>
+      <div class="row mb-3">
+        <div class="col-md-4">
+          <label class="form-label">Bank <span class="text-danger">*</span></label>
+          <select class="form-select" formControlName="bankCode" (change)="onBankChange()" [ngClass]="{'is-invalid': isInvalid('bankCode')}">
+            <option value="">Select Bank</option>
+            <option *ngFor="let b of bankList" [value]="b.bankCode"> {{ b.bankCode }} – {{ b.bankName }} </option>
+          </select>
+          <div class="invalid-feedback d-block" *ngIf="hasError('bankCode','required')">Bank is required.</div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Account <span class="text-danger">*</span></label>
+          <select class="form-select" formControlName="accountCode" [ngClass]="{'is-invalid': isInvalid('accountCode')}">
+            <option value="">Select Account</option>
+            <option *ngFor="let a of filteredAccounts" [value]="a.accountCode"> {{ a.accountCode }} – {{ a.accountName }} </option>
+          </select>
+          <div class="invalid-feedback d-block" *ngIf="hasError('accountCode','required')">Account is required.</div>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Category</label>
+          <select class="form-select" formControlName="instrumentCategory" [ngClass]="{'is-invalid': isInvalid('instrumentCategory')}">
+            <option value="">Select Category</option>
+            <option *ngFor="let c of categoryOptions" [value]="c.value">{{ c.label }}</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Type</label>
+          <select class="form-select" formControlName="instrumentType" [ngClass]="{'is-invalid': isInvalid('instrumentType')}">
+            <option value="">Select Type</option>
+            <option *ngFor="let t of typeOptions" [value]="t.value">{{ t.label }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="row mb-3">
+        <div class="col-md-4">
+          <label class="form-label">Description <span class="text-danger">*</span></label>
+          <input class="form-control" formControlName="bookDescription" placeholder="Book Description" [ngClass]="{'is-invalid': isInvalid('bookDescription')}" />
+          <div class="invalid-feedback d-block" *ngIf="hasError('bookDescription','required')">Description is required.</div>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Instrument Book No</label>
+          <input class="form-control bg-light" formControlName="instrumentBookNo" readonly />
+          <small class="text-muted">Auto-assigned</small>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Starting Serial <span class="text-danger">*</span></label>
+          <input class="form-control" formControlName="startingSerialNo" type="number" placeholder="Start" [ngClass]="{'is-invalid': isInvalid('startingSerialNo')}" />
+          <div class="invalid-feedback d-block" *ngIf="hasError('startingSerialNo','required')">Required.</div>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Ending Serial <span class="text-danger">*</span></label>
+          <input class="form-control" formControlName="endingSerialNo" type="number" placeholder="End" [ngClass]="{'is-invalid': isInvalid('endingSerialNo') || serialRangeError}">
+          <div class="invalid-feedback d-block" *ngIf="hasError('endingSerialNo','required')">Required.</div>
+          <div class="text-danger small" *ngIf="serialRangeError">End must be ≥ Start.</div>
+          <div class="text-danger small" *ngIf="overlapError">Serial range overlaps an existing book.</div>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Running Serial</label>
+          <input class="form-control bg-light" formControlName="runningSerialNo" readonly />
+          <small class="text-muted">Tracks usage</small>
+        </div>
+      </div>
+      <div class="row mb-3">
+        <div class="col-md-2">
+          <label class="form-label">Instrument Leaves</label>
+          <input class="form-control bg-light" formControlName="instrumentLeaves" readonly />
+          <small class="text-muted">End – Start + 1</small>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Status <span class="text-danger">*</span></label>
+          <select class="form-select" formControlName="activeStatus" [ngClass]="{'is-invalid': isInvalid('activeStatus')}">
+            <option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-primary" style="width:90px;" (click)="onClear()">New</button>
+        <button type="button" class="btn btn-success" style="width:90px;" (click)="onSave()"> {{ isEditMode ? 'Update' : 'Save' }} </button>
+      </div>
+    </div>
+  </form>
+  <div class="row align-items-center mb-2">
+    <div class="col-md-9">
+      <span class="text-muted small">Showing {{ filteredRows.length }} of {{ instrumentList.length }} books</span>
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+      <input type="text" class="form-control form-control-sm" [(ngModel)]="searchText" placeholder="Search..." />
+      <button class="btn btn-sm btn-primary" (click)="clearFilters()">Clear</button>
+    </div>
+  </div>
+  <div class="table-responsive mb-3" style="height:55vh; max-height:55vh; overflow:auto;">
+    <table class="table table-borderless mb-0">
+      <thead class="table-light sticky-header">
+        <tr>
+          <th style="text-align:left; width:12%;">Bank</th>
+          <th style="text-align:left; width:16%;">Account</th>
+          <th style="text-align:left; width:5%;">Book</th>
+          <th style="text-align:left; width:20%;">Description</th>
+          <th style="text-align:right; width:8%;">Start</th>
+          <th style="text-align:right; width:8%;">End</th>
+          <th style="text-align:right; width:10%;">Running</th>
+          <th style="text-align:right; width:6%;">Leaves</th>
+          <th style="text-align:left; width:9%;">Status</th>
+          <th style="text-align:left; width:6%;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of filteredRows" [class.table-warning]="isEditMode && row.bankCode === editBankCode && row.instrumentBookNo === editBookNo">
+          <td style="text-align:left;">{{ row.bankName }}</td>
+          <td class="align-middle">{{ row.accountCode }}</td>
+          <td class="align-middle">{{ row.instrumentBookNo }}</td>
+          <td class="align-middle">{{ row.bookDescription }}</td>
+          <td class="align-middle text-end">{{ row.startingSerialNo }}</td>
+          <td class="align-middle text-end">{{ row.endingSerialNo }}</td>
+          <td class="align-middle text-end">{{ row.runningSerialNo }}</td>
+          <td class="align-middle text-end">{{ row.instrumentLeaves }}</td>
+          <td class="align-middle">{{ statusLabel(row.activeStatus) }}</td>
+          <td class="align-middle">
+            <i class="fa fa-pencil fs-5 text-success" style="cursor:pointer;" title="Edit" (click)="startEdit(row)"></i>
+          </td>
+        </tr>
+        <tr *ngIf="filteredRows.length === 0">
+          <td colspan="12" class="text-center text-muted py-3"> {{ instrumentList.length === 0 ? 'No instrument books found.' : 'No results match your filter.' }} </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<div *ngIf="isLoading" class="spinner-overlay">
+  <div class="spinner"></div>
+</div>

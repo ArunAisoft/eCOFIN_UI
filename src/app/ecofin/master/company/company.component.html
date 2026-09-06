@@ -1,0 +1,81 @@
+<div class="p-3">
+  <form [formGroup]="companyForm" novalidate>
+    <div class="bglightgreen p-3 mb-3">
+      <div class="flex-grow-1">
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+          <h6 class="fw-semibold mb-0">Company Details</h6>
+        </div>
+      </div>
+      <div class="row mb-3">
+        <div class="col-md-3">
+          <label class="form-label">Company Code <span class="text-danger">*</span></label>
+          <input class="form-control" formControlName="companyCode" placeholder="Company Code" [ngClass]="{'is-invalid': isInvalid('companyCode')}" />
+          <div class="invalid-feedback d-block" *ngIf="hasError('companyCode','required')">Company Code is required.</div>
+          <div class="invalid-feedback d-block" *ngIf="hasError('companyCode','maxlength')">Max 5 characters.</div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Company Name <span class="text-danger">*</span></label>
+          <input class="form-control" formControlName="companyName" placeholder="Company Name" [ngClass]="{'is-invalid': isInvalid('companyName')}" />
+          <div class="invalid-feedback d-block" *ngIf="hasError('companyName','required')">Company Name is required.</div>
+          <div class="invalid-feedback d-block" *ngIf="hasError('companyName','maxlength')">Max 50 characters.</div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Company Status <span class="text-danger">*</span></label>
+          <select class="form-select" formControlName="objectStatus" [ngClass]="{'is-invalid': isInvalid('objectStatus')}">
+            <option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</option>
+          </select>
+          <div class="invalid-feedback d-block" *ngIf="hasError('objectStatus','required')">Status is required.</div>
+        </div>
+        <div class="col-md-3 text-end mt-4">
+          <button tabIndex="0" type="button" class="btn btn-success" style="width: 80px;" (click)="onSave()" (keydown.enter)="onSave()">Save</button>
+        </div>
+      </div>
+    </div>
+    <div class="bglightgreen p-3 mb-3">
+      <div class="flex-grow-1">
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+          <h6 class="fw-semibold mb-0">Address Details</h6>
+        </div>
+      </div>
+      <div class="row mb-3">
+        <div class="col-md-3">
+          <label class="form-label">Address Line 1</label>
+          <input class="form-control" formControlName="addrLine1" placeholder="Address Line 1" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Address Line 2</label>
+          <input class="form-control" formControlName="addrLine2" placeholder="Address Line 2" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Address Line 3</label>
+          <input class="form-control" formControlName="addrLine3" placeholder="Address Line 3" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Address Line 4</label>
+          <input class="form-control" formControlName="addrLine4" placeholder="Address Line 4" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-3">
+          <label class="form-label">City</label>
+          <input class="form-control" formControlName="addrCity" placeholder="City" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">PIN Code</label>
+          <input class="form-control" formControlName="addrPin" placeholder="PIN" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">State</label>
+          <input class="form-control" formControlName="addrState" placeholder="State" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Country</label>
+          <input class="form-control" formControlName="addrCountry" placeholder="Country" />
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+<div *ngIf="isLoading" class="spinner-overlay">
+  <div class="spinner"></div>
+</div>
