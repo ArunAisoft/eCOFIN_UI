@@ -981,7 +981,7 @@ export class PurchaseBillComponent implements OnInit, OnDestroy {
       const first = baseLines[0];
       baseLines.push({
         ctrlOnHoldNo: this.onHoldNo ?? '', ctrlSequenceNo: seq++,
-        dbCrFlag: 'C', accountCode: v?.bankBlock?.bankAccount ?? '', subAccountCode: null,
+        dbCrFlag: 'C', accountCode: v?.bankBlock?.bank ?? '', subAccountCode: v?.bankBlock?.bankAccount ?? null,
         drCrAmount: bankAmount,
         instrument: first.instrument ?? null, instrumentNo: first.instrumentNo ?? null, instrumentDate: first.instrumentDate ?? null,
         lineParticulars: first.lineParticulars ?? null, automated: 'Y', invoiceDetails: [], costCenterDetails: []
