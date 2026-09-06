@@ -1,0 +1,261 @@
+/* ===========================================================================
+   eCOFIN dashboard styles.
+
+   Step 1 of the dashboard rework: these rules were previously 113 inline
+   style="..." attributes across dashboard.component.html (45 distinct
+   declarations). Behaviour and appearance are unchanged - this only moves
+   the declarations so they can be restyled centrally in later steps.
+
+   Angular [style.width.%] bindings were left in the template; they are
+   data-driven and cannot move to CSS.
+   =========================================================================== */
+
+:host {
+  --dsb-ink:        #1C3D22;   /* headings, primary numerals */
+  --dsb-green:      #3A7D44;   /* brand green */
+  --dsb-green-lt:   #4CAF50;   /* icons */
+  --dsb-sage:       #5a8a5a;   /* labels */
+  --dsb-sage-2:     #6B8F6E;   /* secondary labels */
+  --dsb-border:     #C8DFC5;   /* card + table borders */
+  --dsb-border-lt:  #eef5ee;   /* row separators */
+  --dsb-mint:       #e8f5e8;   /* tinted backgrounds */
+  --dsb-mint-2:     #d4edda;   /* bank icon chip */
+  --dsb-grey:       #888;
+  --dsb-grey-2:     #aaa;
+}
+
+.dsb-badge-sm {
+  font-size:9px;
+  border-radius:10px;
+}
+
+.dsb-bank-icon {
+  width:28px;
+  height:28px;
+  background:#d4edda;
+  flex-shrink:0;
+}
+
+.dsb-bar-3 {
+  height:3px;
+  border-radius:2px;
+}
+
+.dsb-bar-5 {
+  height:5px;
+  border-radius:4px;
+}
+
+.dsb-bg-green {
+  background-color:#3A7D44;
+}
+
+.dsb-bg-mint {
+  background:#e8f5e8;
+}
+
+.dsb-border-mint {
+  border-color:#C8DFC5;
+}
+
+.dsb-canvas-160 {
+  position:relative;
+  height:160px;
+}
+
+.dsb-canvas-200 {
+  position:relative;
+  height:200px;
+}
+
+.dsb-canvas-210 {
+  position:relative;
+  height:210px;
+}
+
+.dsb-canvas-240 {
+  position:relative;
+  height:240px;
+}
+
+.dsb-card-title {
+  font-size:13px;
+  font-weight:600;
+  color:#1C3D22;
+}
+
+.dsb-chip {
+  border-radius:20px;
+  font-size:11px;
+  font-weight:500;
+}
+
+.dsb-clickable-card {
+  cursor:pointer;
+  transition:box-shadow .15s,border-color .15s;
+}
+
+.dsb-clickable-row {
+  cursor:pointer;
+  transition:background .12s;
+}
+
+.dsb-dot {
+  width:8px;
+  height:8px;
+}
+
+.dsb-filter-label {
+  font-size:11px;
+  font-weight:600;
+  color:#5a8a5a;
+}
+
+.dsb-green-13 {
+  font-size:13px;
+  color:#3A7D44;
+}
+
+.dsb-grey-10 {
+  font-size:10px;
+  color:#888;
+}
+
+.dsb-grey2-10 {
+  font-size:10px;
+  color:#aaa;
+}
+
+.dsb-grey2-9 {
+  font-size:9px;
+  color:#aaa;
+}
+
+.dsb-ink {
+  color:#1C3D22;
+}
+
+.dsb-ink-12-600 {
+  font-size:12px;
+  font-weight:600;
+  color:#1C3D22;
+}
+
+.dsb-kpi-icon {
+  font-size:20px;
+  color:#4CAF50;
+}
+
+.dsb-kpi-label {
+  font-size:11px;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.03em;
+}
+
+.dsb-kpi-sub {
+  font-size:10px;
+  color:#5a8a5a;
+  font-weight:600;
+}
+
+.dsb-kpi-value {
+  font-size:22px;
+  color:#1C3D22;
+  line-height:1;
+}
+
+.dsb-kpi-value-alt {
+  font-size:22px;
+  line-height:1;
+}
+
+.dsb-maxw-180 {
+  max-width:180px;
+}
+
+.dsb-metric-cell {
+  padding:5px 8px;
+  border-bottom:1px solid #eef5ee;
+}
+
+.dsb-metric-head {
+  font-size:10px;
+  color:#6B8F6E;
+  font-weight:500;
+  padding:4px 8px;
+  border-bottom:1px solid #C8DFC5;
+}
+
+.dsb-mono-10 {
+  font-family:monospace;
+  font-size:10px;
+}
+
+.dsb-mono-10-grey {
+  font-family:monospace;
+  font-size:10px;
+  color:#888;
+}
+
+.dsb-mono-11-nowrap {
+  white-space:nowrap;
+  font-family:monospace;
+  font-size:11px;
+}
+
+.dsb-muted-10 {
+  font-size:10px;
+  color:#6B8F6E;
+}
+
+.dsb-status-select {
+  width:130px;
+  font-size:12px;
+}
+
+.dsb-sub-title {
+  font-size:11px;
+  font-weight:600;
+  color:#1C3D22;
+  margin:4px 0;
+}
+
+.dsb-t10 {
+  font-size:10px;
+}
+
+.dsb-t11 {
+  font-size:11px;
+}
+
+.dsb-t12 {
+  font-size:12px;
+}
+
+.dsb-t14 {
+  font-size:14px;
+}
+
+.dsb-t15 {
+  font-size:15px;
+}
+
+.dsb-t9 {
+  font-size:9px;
+}
+
+.dsb-th {
+  font-size:11px;
+  font-weight:500;
+  color:#fff;
+  padding:8px 10px;
+  border:none;
+}
+
+.dsb-type-badge {
+  font-size:10px;
+  font-weight:600;
+  padding:2px 7px;
+  border-radius:4px;
+}
