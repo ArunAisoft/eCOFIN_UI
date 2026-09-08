@@ -217,16 +217,8 @@ export class JournalComponent implements OnInit, OnDestroy {
   }
 
   onMonthChange(): void {
-    const hadVoucherList = this.voucherList.length > 0;
-    if (this.onHoldNo || this.voucherNo) {
-      this.resetAllVoucherFields();
-    }
-    this.voucherList = [];
-    // const newVoucherDate = this.getVoucherDateFromPeriod();
-    // this.voucherBlock.get('voucherDate')?.setValue(newVoucherDate);
-    if (hadVoucherList) {
-      this.onView();
-    }
+    if (this.onHoldNo || this.voucherNo) this.resetAllVoucherFields();
+    if (this.header.get('month')?.value) this.onView();
   }
 
   private getVoucherDateFromPeriod(): string {
@@ -688,6 +680,7 @@ export class JournalComponent implements OnInit, OnDestroy {
 
   onView(): void {
     window.scrollTo(0, 0);
+    this.voucherList = [];
     if (this.header.invalid) { this.header.markAllAsTouched(); return; }
     const accPeriod = (this.header.get('month')?.value ?? '').toString().trim();
     this.isLoading = true;
@@ -700,6 +693,7 @@ export class JournalComponent implements OnInit, OnDestroy {
             const list = (res.data ?? []) as JournalSummaryModel[];
             if (!list.length) { this.voucherList = []; this.alertService.info('No Journal Vouchers found for the selected Financial Year & Month.'); return; }
             this.voucherList = list;
+            this.sortTable('ctrlOnHoldNo');
             return;
           }
           this.voucherList = [];
@@ -912,10 +906,15 @@ export class JournalComponent implements OnInit, OnDestroy {
     const voucherDate = this.form.get('voucherBlock.voucherDate')?.value;
     const accPeriod = this.form.get('header.month')?.value;
     if (!voucherDate || !accPeriod) return true;
+
     const period = this.months.find(p => p.accperiod === accPeriod);
     if (!period) return true;
-    const vd = new Date(voucherDate);
-    return vd >= new Date(period.periodfrom) && vd <= new Date(period.periodto);
+
+    const stripTime = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const vd = stripTime(new Date(voucherDate));
+    const from = stripTime(new Date(period.periodfrom));
+    const to = stripTime(new Date(period.periodto));
+    return vd >= from && vd <= to;
   }
 
   private buildDetails(v: any): any[] | null {

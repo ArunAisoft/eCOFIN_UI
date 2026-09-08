@@ -1,40 +1,29 @@
 <div class="mt-3">
-    <!-- ── Filter bar ──────────────────────────────────────────────────── -->
     <div class="bglightgreen p-3 mb-3">
         <div class="row align-items-end g-2">
-            <div class="col-md-4 col-sm-6">
-                <label class="form-label mb-1 dsb-filter-label">Bank</label>
-                <select class="form-select form-select-sm" [formControl]="bankCodeControl" (change)="onFilterChange()">
+            <div class="col-md-3 col-sm-6">
+                <label class="form-label">Bank</label>
+                <select class="form-select" [formControl]="bankCodeControl" (change)="onFilterChange()">
                     <option [value]="null">All banks</option>
-                    <option *ngFor="let b of bankSummary" [value]="b.bankCode">{{ b.bankCode }} — {{ b.bankName }}</option>
+                    <option *ngFor="let b of bankList" [value]="b.bankCode"> {{ b.bankCode }} → {{ b.bankName }} </option>
                 </select>
             </div>
             <div class="col-md-2 col-sm-6">
-                <label class="form-label mb-1 dsb-filter-label">Financial year</label>
-                <select class="form-select form-select-sm" [formControl]="finYearControl" (change)="onFinYearChange()">
-                    <option [value]="null">All years</option>
-                    <option *ngFor="let fy of financialYears" [value]="fy">FY {{ fy }}</option>
+                <label class="form-label"> Financial Year </label>
+                <select class="form-select" [formControl]="finYearControl" (change)="onFinYearChange()">
+                    <option *ngFor="let fy of years" [value]="fy.financialyear"> {{ fy.financialyear }} </option>
                 </select>
             </div>
-            <!-- Periods narrow to the selected year. Period is more specific and
-                 wins server-side, so onFinYearChange() clears it when the year moves. -->
             <div class="col-md-2 col-sm-6">
-                <label class="form-label mb-1 dsb-filter-label">Period</label>
-                <select class="form-select form-select-sm" [formControl]="accPeriodControl" (change)="onFilterChange()">
-                    <option [value]="null">{{ finYearControl.value ? 'All months in year' : 'All periods' }}</option>
-                    <option *ngFor="let m of periodsForSelectedYear" [value]="m.accPeriod">{{ m.accPeriod }}</option>
+                <label class="form-label"> Month </label>
+                <select class="form-select" [formControl]="accPeriodControl" (change)="onFilterChange()">
+                    <option [ngValue]="null">All Months</option>
+                    <option *ngFor="let month of months" [value]="month.accperiod"> {{ month.accperiod }} </option>
                 </select>
-            </div>
-            <div class="col-md-3 col-sm-6 d-flex gap-2">
-                <button class="btn btn-sm btn-outline-secondary flex-fill" (click)="onResetFilters()">
-                    <i class="bi bi-arrow-counterclockwise me-1"></i>Reset </button>
-                <button class="btn btn-sm btn-success flex-fill" (click)="loadSummary()">
-                    <i class="bi bi-arrow-repeat me-1"></i>Refresh </button>
             </div>
         </div>
     </div>
     <ng-container *ngIf="!isLoading && kpi">
-        <!-- ── KPI cards ──────────────────────────────────────────────────── -->
         <div class="row g-3 mb-3">
             <div class="col-6 col-sm-4 col-md">
                 <div class="card h-100 border-0 bglightgreen">
@@ -92,7 +81,6 @@
                 </div>
             </div>
         </div>
-        <!-- ── Voucher type tabs ──────────────────────────────────────────── -->
         <div class="d-flex flex-wrap gap-2 mb-3 pb-2 border-bottom">
             <button class="btn btn-sm dsb-chip" [ngStyle]="!selectedVoucherType
           ? { background:'#534AB7', color:'#fff', borderColor:'transparent' }
@@ -106,7 +94,6 @@
                        color:      selectedVoucherType?.code === cfg.code ? '#fff' : cfg.color }"> {{ cfg.code }} </span>
             </button>
         </div>
-        <!-- ── Drill-down panel ───────────────────────────────────────────── -->
         <div *ngIf="selectedVoucherType" class="card mb-3" [ngStyle]="{ borderLeft: '4px solid ' + selectedVoucherType.color }">
             <div *ngIf="isDrillLoading" class="card-body text-center py-4">
                 <div class="spinner-border spinner-border-sm" [ngStyle]="{ color: selectedVoucherType.color }"></div>
@@ -204,7 +191,6 @@
                 </div>
             </ng-container>
         </div>
-        <!-- ── Charts row 1 ──────────────────────────────────────────────── -->
         <div class="row g-3 mb-3">
             <div class="col-md-6">
                 <div class="card h-100 border-0 bglightgreen">
@@ -231,7 +217,6 @@
                 </div>
             </div>
         </div>
-        <!-- ── Charts row 2 ──────────────────────────────────────────────── -->
         <div class="row g-3 mb-3">
             <div class="col-md-6">
                 <div class="card h-100 border-0 bglightgreen">
@@ -252,7 +237,6 @@
                 </div>
             </div>
         </div>
-        <!-- ── Voucher type breakdown ─────────────────────────────────────── -->
         <div class="card mb-3 border-0 bglightgreen">
             <div class="card-body">
                 <h6 class="card-title mb-3 dsb-card-title">Voucher type breakdown</h6>
@@ -291,16 +275,10 @@
                 </div>
             </div>
         </div>
-        <!-- ── Recent transactions + Bank balances ────────────────────────── -->
         <div class="row g-3">
-            <!-- Recent transactions -->
             <div class="col-lg-8">
                 <div class="card h-100 border-0 bglightgreen">
                     <div class="card-body">
-                        <!-- Status sits here, not in the page filter bar. It only
-                             filters these rows client-side; it does not affect the
-                             KPIs, charts or breakdown cards. In the filter bar it
-                             read like a page-level filter and was misleading. -->
                         <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
                             <div>
                                 <h6 class="card-title mb-0 dsb-card-title">Recent transactions</h6>
@@ -308,8 +286,7 @@
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="text-muted dsb-t11">Status</span>
-                                <select class="form-select form-select-sm dsb-status-select"
-                                        [(ngModel)]="selectedStatus" (ngModelChange)="onStatusFilterChange($event)">
+                                <select class="form-select form-select-sm dsb-status-select" [(ngModel)]="selectedStatus" (ngModelChange)="onStatusFilterChange($event)">
                                     <option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</option>
                                 </select>
                                 <small class="text-muted dsb-t11">{{ filteredRecentVouchers.length }} rows</small>
@@ -359,7 +336,6 @@
                     </div>
                 </div>
             </div>
-            <!-- Bank balances -->
             <div class="col-lg-4">
                 <div class="card h-100 border-0 bglightgreen">
                     <div class="card-body">
@@ -421,7 +397,6 @@
         </div>
     </ng-container>
 </div>
-<!-- Spinner overlay -->
 <div *ngIf="isLoading" class="spinner-overlay">
     <div class="spinner"></div>
 </div>

@@ -52,7 +52,6 @@
                             <button tabIndex="0" type="button" class="btn btn-primary" style="width: 100px;" (click)="resetAllVoucherFields()" (keydown.enter)="resetAllVoucherFields()">New</button>
                             <button tabIndex="0" type="button" [disabled]="isVoucherNoGenertaed" class="btn" [ngClass]="isOnHoldNoGenerated ? 'btn-success' : 'btn-danger'" style="width: 100px;" (click)="onHold()" (keydown.enter)="onHold()"> OnHold </button>
                             <button tabIndex="0" type="button" [disabled]="isVoucherNoGenertaed" class="btn" [ngClass]="isVoucherNoGenertaed ? 'btn-success' : 'btn-danger'" style="width: 100px;" (click)="onPost()" (keydown.enter)="onPost()"> Post </button>
-                            <button tabIndex="0" type="button" class="btn btn-primary" style="width: 100px;" (click)="onView()" (keydown.enter)="onView()">View</button>
                         </div>
                     </div>
                 </div>
@@ -240,7 +239,7 @@
             </tbody>
         </table>
     </div>
-    <div class="table-responsive voucher-detail-table mb-3">
+    <div class="table-responsive voucher-detail-table mb-3" *ngIf="header?.get('month')?.value">
         <table *ngIf="voucherList?.length" class="table table-hover align-middle table-fixed" width="100%">
             <thead class="table-light sticky-header">
                 <tr>

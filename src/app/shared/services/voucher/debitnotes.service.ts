@@ -36,4 +36,8 @@ export class DebitNotesService {
   saveDebitNoteOnPost(payload: DebitNotesRequestModel): Observable<ApiResponse<any>> {
     return this.http.post<ApiResponse<any>>('DebitNotes/PostDebitNote', payload);
   }
+  
+    postMultipleDebitNotea(payload: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>('DebitNotes/PostMultipleDebitNotes', payload);
+  }
 }

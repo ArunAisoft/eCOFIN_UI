@@ -65,6 +65,10 @@ export class DebitNoteComponent implements OnInit, OnDestroy {
 
   voucherSysCategoryItems = [{ code: 'REGUL', name: 'Regular' }];
 
+  searchText = '';
+  maxSelection = 50;
+  selectVouchersAll: boolean = false;
+
   bankLabel = (b: BanksAndAccountsModel | null): string => b ? `${b.bankCode} → ${b.bankName || 'Unknown'}` : 'Unknown';
   accountLabel = (a: BankAccountModel | null): string => a ? `${a.accountCode} → ${a.accountName || 'Unknown'}` : 'Unknown';
   groupLabel = (g: GroupAccountModel) => g ? `${g.accountCode} → ${g.accountName || 'Unknown'}` : 'Unknown';
@@ -232,16 +236,8 @@ export class DebitNoteComponent implements OnInit, OnDestroy {
   }
 
   onMonthChange(): void {
-    const hadVoucherList = this.voucherList.length > 0;
-    if (this.onHoldNo || this.voucherNo) {
-      this.resetAllVoucherFields();
-    }
-    this.voucherList = [];
-    // const newVoucherDate = this.getVoucherDateFromPeriod();
-    // this.voucherBlock.get('voucherDate')?.setValue(newVoucherDate);
-    if (hadVoucherList) {
-      this.onView();
-    }
+    if (this.onHoldNo || this.voucherNo) this.resetAllVoucherFields();
+    if (this.header.get('month')?.value) this.onView();
   }
 
   private getVoucherDateFromPeriod(): string {
@@ -513,7 +509,12 @@ export class DebitNoteComponent implements OnInit, OnDestroy {
     this.recalculateTotals();
   }
 
-  resetAllVoucherFields(): void { this.resetMainBlock(); this.resetBankBlock(); this.resetVoucherBlock(); this.resetLinesBlock(); }
+  resetAllVoucherFields(): void { 
+    this.selectVouchersAll = false; 
+    this.resetMainBlock(); 
+    this.resetBankBlock(); 
+    this.resetVoucherBlock(); 
+    this.resetLinesBlock(); }
 
   recalculateTotals(): void {
     let c = 0, d = 0;
@@ -648,9 +649,16 @@ export class DebitNoteComponent implements OnInit, OnDestroy {
 
   onView(): void {
     window.scrollTo(0, 0);
+    this.voucherList = [];
+    this.searchText = '';
+    this.selectVouchersAll = false;
+    this.voucherList.forEach(x => x.selected = false);
+    this.filteredVouchersList.forEach(x => x.selected = false);
+
     if (this.header.invalid) { this.header.markAllAsTouched(); return; }
     const accPeriod = (this.header.get('month')?.value ?? '').toString().trim();
     this.isLoading = true;
+    this.selectVouchersAll = false;
     this.resetAllVoucherFields();
     normalizeResponse<any[]>(this.dataService.getAllDebitNotes(accPeriod), 'Debit Notes')
       .pipe(finalize(() => (this.isLoading = false)))
@@ -659,9 +667,10 @@ export class DebitNoteComponent implements OnInit, OnDestroy {
           if (res.status === 200) {
             const list = (res.data ?? []) as DebitNoteSummaryModel[];
             if (!list.length) { this.voucherList = []; this.alertService.info('No Debit Notes found for the selected Financial Year & Month.'); return; }
-            this.voucherList = list; return;
+            this.voucherList = list;
+            this.sortTable('ctrlOnHoldNo');
+            return;
           }
-          this.voucherList = [];
           this.alertService.showCommonError(res.status, res.message, 'Debit Notes');
         },
         error: (err: any) => { this.voucherList = []; this.alertService.showCommonError(err?.status || 0, err?.error?.message || err?.message, 'Debit Notes'); }
@@ -856,10 +865,15 @@ export class DebitNoteComponent implements OnInit, OnDestroy {
     const voucherDate = this.form.get('voucherBlock.voucherDate')?.value;
     const accPeriod = this.form.get('header.month')?.value;
     if (!voucherDate || !accPeriod) return true;
+
     const period = this.months.find(p => p.accperiod === accPeriod);
     if (!period) return true;
-    const vd = new Date(voucherDate);
-    return vd >= new Date(period.periodfrom) && vd <= new Date(period.periodto);
+
+    const stripTime = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const vd = stripTime(new Date(voucherDate));
+    const from = stripTime(new Date(period.periodfrom));
+    const to = stripTime(new Date(period.periodto));
+    return vd >= from && vd <= to;
   }
 
   private buildDetails(v: any): any[] | null {
@@ -963,6 +977,9 @@ export class DebitNoteComponent implements OnInit, OnDestroy {
       next: (res: ApiResponse<any>) => {
         if (res?.status === 200 || res?.status === 201) {
           this.voucherNo = res.data as string;
+          this.selectVouchersAll = false;
+          this.voucherList.forEach(x => x.selected = false);
+          this.filteredVouchersList.forEach(x => x.selected = false);
           this.loadVoucherDetails(this.onHoldNo ?? '');
           if (this.voucherList.length > 0) this.onView();
           this.alertService.success(res.message || 'Voucher Posted successfully.');
@@ -989,6 +1006,25 @@ export class DebitNoteComponent implements OnInit, OnDestroy {
       if (aStr > bStr) return this.sortDirection === 'asc' ? 1 : -1;
       return 0;
     });
+  }
+
+  onVCheckAll(event: Event, list: any[]): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    const selectable = list.filter(x => !x.vchrNumber);
+    if (checked && selectable.length > this.maxSelection) {
+      this.alertService.warning(`You can select maximum ${this.maxSelection} records at a time.`);
+      selectable.forEach((x, i) => x.selected = i < this.maxSelection); return;
+    }
+    selectable.forEach(x => x.selected = checked);
+  }
+
+  onRowCheckboxChange(event: Event, row: any, list?: any[]): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    if (checked) {
+      const selectedCount = (list ?? []).filter(x => x.selected).length;
+      if (selectedCount >= this.maxSelection) { this.alertService.warning(`Maximum ${this.maxSelection} records allowed.`); (event.target as HTMLInputElement).checked = false; return; }
+    }
+    row.selected = checked;
   }
 
   get modalTotalAccepted(): number {
@@ -1048,9 +1084,53 @@ export class DebitNoteComponent implements OnInit, OnDestroy {
   onInvoicesSaved(rows: any[]) {
     if (this.currentInvoiceTriggerIndex == null) return;
     const fg = this.lines.at(this.currentInvoiceTriggerIndex) as FormGroup;
-    const total = rows.reduce((s, r) => s + Number(r.acceptedAmount || 0), 0);
-    fg.patchValue({ amount: total || null, invoiceDetails: rows });
-    fg.markAsDirty(); fg.markAsTouched(); this.recalculateTotals();
-    this.showhideInvoiceModal(false); this.currentInvoiceTriggerIndex = null;
+    const validRows = rows.filter(r => Number(r.acceptedAmount) > 0);
+    const total = Number(validRows.reduce((s, r) => s + Number(r.acceptedAmount || 0), 0).toFixed(2));
+    const billNos = validRows.map(r => r.billNo?.trim().split('\\').pop()?.trim()).filter(Boolean).join(', ');
+    fg.patchValue({ amount: total || null, particulars: billNos ? `INV: ${billNos}` : null, invoiceDetails: validRows });
+    fg.markAsDirty();
+    fg.markAsTouched();
+    this.recalculateTotals();
+    this.showhideInvoiceModal(false);
+    this.currentInvoiceTriggerIndex = null;
+  }
+
+  get filteredVouchersList(): DebitNoteSummaryModel[] {
+    const q = this.searchText.trim().toLowerCase();
+    if (!q) return this.voucherList;
+    return this.voucherList.filter(r =>
+      r.ctrlOnHoldNo?.toLowerCase().includes(q) || r.vchrNumber?.toLowerCase().includes(q) ||
+      r.bankCode?.includes(q) || r.description?.toLowerCase().includes(q) || r.vchrNarration?.toLowerCase().includes(q)
+    );
+  }
+
+  copyBillBalanceToAccepted(inv: any): void {
+    inv.acceptedAmount = inv.billBalance;
+    this.onInvoiceAcceptedBlur(inv);
+  }
+
+  onBulkPost(): void {
+    const selectedRows = this.filteredVouchersList.filter((x: any) => x.selected && !x.vchrNumber);
+    if (!selectedRows.length) { this.alertService.warning('Please select at least one OnHold Voucher.'); return; }
+    if (selectedRows.length > this.maxSelection) { this.alertService.warning(`Maximum ${this.maxSelection} records allowed.`); return; }
+
+    const onHoldNumbers = selectedRows.map((x: any) => x.ctrlOnHoldNo).filter((x: any) => x);
+    const v = this.form.value;
+    const payload = { onHoldNumbers, accountingPeriod: this.header.get('month')?.value || '', username: this.userName || '', locationCode: v?.header?.locationCode ?? 'BILZ' };
+
+    this.isLoading = true;
+    this.dataService.postMultipleDebitNotea(payload).subscribe({
+      next: (res: any) => {
+        this.isLoading = false;
+        if (res?.success) {
+          this.onView();
+          this.alertService.success(res.message || 'Bulk posting completed successfully.');
+          this.selectVouchersAll = false;
+          this.voucherList.forEach(x => x.selected = false);
+          this.filteredVouchersList.forEach((x: any) => x.selected = false);
+        } else this.alertService.warning(res.message || 'Bulk posting failed.');
+      },
+      error: (err: any) => { this.isLoading = false; this.alertService.error(err?.error?.message || 'Error while posting vouchers.'); }
+    });
   }
 }

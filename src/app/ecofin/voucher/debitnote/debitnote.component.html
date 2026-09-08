@@ -38,7 +38,6 @@
                             <button tabIndex="0" type="button" class="btn btn-primary" style="width: 100px;" (click)="resetAllVoucherFields()" (keydown.enter)="resetAllVoucherFields()">New</button>
                             <button tabIndex="0" type="button" [disabled]="isVoucherNoGenertaed" class="btn" [ngClass]="isOnHoldNoGenerated ? 'btn-success' : 'btn-danger'" style="width:100px;" (click)="onHold()" (keydown.enter)="onHold()">OnHold</button>
                             <button tabIndex="0" type="button" [disabled]="isVoucherNoGenertaed" class="btn" [ngClass]="isVoucherNoGenertaed ? 'btn-success' : 'btn-danger'" style="width:100px;" (click)="onPost()" (keydown.enter)="onPost()">Post</button>
-                            <button tabIndex="0" type="button" class="btn btn-primary" style="width: 100px;" (click)="onView()" (keydown.enter)="onView()">View</button>
                         </div>
                     </div>
                 </div>
@@ -196,10 +195,21 @@
             </tbody>
         </table>
     </div>
-    <div class="table-responsive voucher-detail-table mb-3">
-        <table *ngIf="voucherList?.length" class="table table-hover align-middle table-fixed" width="100%">
+    <div class="row align-items-center mb-2" *ngIf="header?.get('month')?.value">
+        <div class="col-md-7">
+            <span class="text-muted small">Showing {{ filteredVouchersList.length }} of {{ voucherList.length }} vouchers</span><small class="text-muted"> (Note: Max 50 records at a time.) </small>
+        </div>
+        <div class="col-md-5 d-flex gap-2">
+            <input type="text" class="form-control" [(ngModel)]="searchText" [ngModelOptions]="{standalone: true}" placeholder="Search..." />
+            <button class="btn btn-primary" (click)="searchText = ''">Clear</button>
+            <button class="btn btn-primary" style="width: 120px;" (click)="onBulkPost()" [disabled]="isLoading">Bulk Post</button>
+        </div>
+    </div>
+    <div class="table-responsive voucher-detail-table mb-3" *ngIf="header?.get('month')?.value">
+        <table class="table table-hover align-middle table-fixed" width="100%">
             <thead class="table-light sticky-header">
                 <tr>
+                    <th style="width:30px"><input type="checkbox" [(ngModel)]="selectVouchersAll" [ngModelOptions]="{standalone: true}" (change)="onVCheckAll($event, filteredVouchersList)"></th>
                     <th (click)="sortTable('ctrlOnHoldNo')" style="cursor:pointer;"> OnHold No <i *ngIf="sortColumn==='ctrlOnHoldNo'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i></th>
                     <th (click)="sortTable('vchrNumber')" style="cursor:pointer;"> Voucher No <i *ngIf="sortColumn==='vchrNumber'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i></th>
                     <th (click)="sortTable('vchrDate')" style="cursor:pointer;"> Voucher Date <i *ngIf="sortColumn==='vchrDate'" class="fa" [ngClass]="{'fa-sort-up':sortDirection==='asc','fa-sort-down':sortDirection==='desc'}"></i></th>
@@ -209,9 +219,10 @@
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let item of voucherList">
+                <tr *ngFor="let item of filteredVouchersList">
+                    <td><input [disabled]="item.vchrNumber" type="checkbox" [checked]="item.selected" (change)="onRowCheckboxChange($event, item, filteredVouchersList)"></td>
                     <td><a href="#" (click)="onVoucherRowClick(item); $event.preventDefault()"> {{ item.ctrlOnHoldNo || '' }} </a></td>
-                    <td>{{ item.vchrNumber || '' }}</td>
+                    <td>{{ item.vchrNumber || '' }}</td>    
                     <td>{{ item.vchrDate | date:'dd/MM/yyyy' }}</td>
                     <td class="text-end">{{ (item.totalAmount || 0) | number:'1.2-2' }}</td>
                     <td>{{ item.bankCode && item.description ? item.bankCode + ' → ' + item.description : (item.bankCode || item.description || '') }}</td>
@@ -294,7 +305,7 @@
                                     <td>{{inv.voucherNo}}</td>
                                     <td>{{inv.billNo}}</td>
                                     <td>{{inv.billDate | date:'dd/MM/yyyy'}}</td>
-                                    <td class="text-end">{{ inv.billBalance | number:'1.2-2' }}</td>
+                                    <td class="text-end"><button type="button" class="btn btn-link p-0 text-decoration-none" (click)="copyBillBalanceToAccepted(inv)" title="Copy Bill Balance to Accepted"> {{ inv.billBalance | number:'1.2-2' }} </button></td>                                    
                                     <td class="text-end" style="width:140px">
                                         <input type="text" class="form-control form-control-sm" [value]="inv.acceptedAmount==null ? '' : inv.acceptedAmount" (input)="onInvoiceInputChange($event, inv)" (blur)="onInvoiceAcceptedBlur(inv)" />
                                     </td>
