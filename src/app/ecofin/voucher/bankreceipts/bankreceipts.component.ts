@@ -231,16 +231,8 @@ export class BankReceiptsComponent implements OnInit, OnDestroy {
   }
 
   onMonthChange(): void {
-    const hadVoucherList = this.voucherList.length > 0;
-    if (this.onHoldNo || this.voucherNo) {
-      this.resetAllVoucherFields();
-    }
-    this.voucherList = [];
-    // const newVoucherDate = this.getVoucherDateFromPeriod();
-    // this.voucherBlock.get('voucherDate')?.setValue(newVoucherDate);
-    if (hadVoucherList) {
-      this.onView();
-    }
+    if (this.onHoldNo || this.voucherNo) this.resetAllVoucherFields();
+    if (this.header.get('month')?.value) this.onView();
   }
 
   private getVoucherDateFromPeriod(): string {
@@ -775,6 +767,7 @@ export class BankReceiptsComponent implements OnInit, OnDestroy {
             const list = (res.data ?? []) as BankReceiptSummaryModel[];
             if (!list.length) { this.voucherList = []; this.alertService.info('No Receipts found for the selected Financial Year & Month.'); return; }
             this.voucherList = list;
+            this.sortTable('ctrlOnHoldNo');
             return;
           }
           this.voucherList = [];
@@ -1018,10 +1011,15 @@ export class BankReceiptsComponent implements OnInit, OnDestroy {
     const voucherDate = this.form.get('voucherBlock.voucherDate')?.value;
     const accPeriod = this.form.get('header.month')?.value;
     if (!voucherDate || !accPeriod) return true;
+
     const period = this.months.find(p => p.accperiod === accPeriod);
     if (!period) return true;
-    const vd = new Date(voucherDate);
-    return vd >= new Date(period.periodfrom) && vd <= new Date(period.periodto);
+
+    const stripTime = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const vd = stripTime(new Date(voucherDate));
+    const from = stripTime(new Date(period.periodfrom));
+    const to = stripTime(new Date(period.periodto));
+    return vd >= from && vd <= to;
   }
 
   private buildDetails(v: any): any[] | null {
@@ -1284,12 +1282,19 @@ export class BankReceiptsComponent implements OnInit, OnDestroy {
   onInvoicesSaved(rows: any[]) {
     if (this.currentInvoiceTriggerIndex == null) return;
     const fg = this.lines.at(this.currentInvoiceTriggerIndex) as FormGroup;
-    const total = rows.reduce((s, r) => s + Number(r.acceptedAmount || 0), 0);
-    fg.patchValue({ amount: total || null, invoiceDetails: rows });
+    const validRows = rows.filter(r => Number(r.acceptedAmount) > 0);
+    const total = Number(validRows.reduce((s, r) => s + Number(r.acceptedAmount || 0), 0).toFixed(2));
+    const billNos = validRows.map(r => r.billNo?.trim().split('\\').pop()?.trim()).filter(Boolean).join(', ');
+    fg.patchValue({ amount: total || null, particulars: billNos ? `INV: ${billNos}` : null, invoiceDetails: validRows });
     fg.markAsDirty();
     fg.markAsTouched();
     this.recalculateTotals();
     this.showhideInvoiceModal(false);
     this.currentInvoiceTriggerIndex = null;
+  }
+
+  copyBillBalanceToAccepted(inv: any): void {
+    inv.acceptedAmount = inv.billBalance;
+    this.onInvoiceAcceptedBlur(inv);
   }
 }

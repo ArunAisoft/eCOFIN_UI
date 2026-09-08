@@ -6,6 +6,7 @@ export interface DebitNoteSummaryModel {
   bankCode?: string | null;
   description?: string | null;
   vchrNarration?: string | null;
+  selected?: Boolean;
 }
 
 export interface DebitNotesModel {

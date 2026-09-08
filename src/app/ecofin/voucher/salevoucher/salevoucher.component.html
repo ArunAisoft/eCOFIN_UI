@@ -52,7 +52,6 @@
                             <button tabIndex="0" type="button" class="btn btn-primary" style="width: 100px;" (click)="resetAllVoucherFields()" (keydown.enter)="resetAllVoucherFields()">New</button>
                             <button tabIndex="0" type="button" [disabled]="isVoucherNoGenertaed" class="btn" [ngClass]="isOnHoldNoGenerated ? 'btn-success' : 'btn-danger'" style="width: 100px;" (click)="onHold()" (keydown.enter)="onHold()"> OnHold </button>
                             <button tabIndex="0" type="button" [disabled]="isVoucherNoGenertaed" class="btn" [ngClass]="isVoucherNoGenertaed ? 'btn-success' : 'btn-danger'" style="width: 100px;" (click)="onPost()" (keydown.enter)="onPost()"> Post </button>
-                            <button tabIndex="0" type="button" class="btn btn-primary" style="width: 100px;" (click)="onView()" (keydown.enter)="onView()">View</button>
                         </div>
                     </div>
                 </div>
@@ -250,7 +249,7 @@
             </tbody>
         </table>
     </div>
-    <div class="row align-items-center mb-2" *ngIf="filteredVouchersList?.length">
+    <div class="row align-items-center mb-2" *ngIf="header?.get('month')?.value">
         <div class="col-md-7">
             <span class="text-muted small">Showing {{ filteredVouchersList.length }} of {{ voucherList.length }} vouchers</span><small class="text-muted"> (Note: Max 50 records at a time.) </small>
         </div>
@@ -260,25 +259,18 @@
             <button class="btn btn-primary" style="width: 120px;" (click)="onBulkPost()" [disabled]="isLoading">Bulk Post</button>
         </div>
     </div>
-    <div class="table-responsive voucher-detail-table mb-3">
-        <table *ngIf="filteredVouchersList?.length" class="table table-hover align-middle table-fixed" width="100%">
+    <div class="table-responsive voucher-detail-table mb-3" *ngIf="header?.get('month')?.value">
+        <table class="table table-hover align-middle table-fixed" width="100%">
             <thead class="table-light sticky-header">
                 <tr>
                     <th style="width:30px"><input type="checkbox" [(ngModel)]="selectVouchersAll" [ngModelOptions]="{standalone: true}" (change)="onVCheckAll($event, filteredVouchersList)"></th>
-                    <th (click)="sortTable('ctrlOnHoldNo', 'voucher')" style="cursor:pointer;"> OnHold No <i *ngIf="sortColumn === 'ctrlOnHoldNo'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i>
-                    </th>
-                    <th (click)="sortTable('vchrNumber', 'voucher')" style="cursor:pointer;"> Voucher No <i *ngIf="sortColumn === 'vchrNumber'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i>
-                    </th>
-                    <th (click)="sortTable('billNumber', 'voucher')" style="cursor:pointer;"> Bill No <i *ngIf="sortColumn === 'billNumber'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i>
-                    </th>
-                    <th (click)="sortTable('billDate', 'voucher')" style="cursor:pointer;"> Voucher Date <i *ngIf="sortColumn === 'billDate' && activeSortType==='voucher'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i>
-                    </th>
-                    <th class="text-end" (click)="sortTable('billAmount', 'voucher')" style="cursor:pointer;"> Total Amount <i *ngIf="sortColumn === 'billAmount'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i>
-                    </th>
-                    <th (click)="sortTable('bankCode', 'voucher')" style="cursor:pointer;"> Bank Details <i *ngIf="sortColumn === 'bankCode'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i>
-                    </th>
-                    <th (click)="sortTable('vchrNarration', 'voucher')" style="cursor:pointer;"> Voucher Narration <i *ngIf="sortColumn === 'vchrNarration'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i>
-                    </th>
+                    <th (click)="sortTable('ctrlOnHoldNo', 'voucher')" style="cursor:pointer;"> OnHold No <i *ngIf="sortColumn === 'ctrlOnHoldNo'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i></th>
+                    <th (click)="sortTable('vchrNumber', 'voucher')" style="cursor:pointer;"> Voucher No <i *ngIf="sortColumn === 'vchrNumber'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i></th>
+                    <th (click)="sortTable('billNumber', 'voucher')" style="cursor:pointer;"> Bill No <i *ngIf="sortColumn === 'billNumber'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i></th>
+                    <th (click)="sortTable('billDate', 'voucher')" style="cursor:pointer;"> Voucher Date <i *ngIf="sortColumn === 'billDate' && activeSortType==='voucher'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i></th>
+                    <th class="text-end" (click)="sortTable('billAmount', 'voucher')" style="cursor:pointer;"> Total Amount <i *ngIf="sortColumn === 'billAmount'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i></th>
+                    <th (click)="sortTable('bankCode', 'voucher')" style="cursor:pointer;"> Bank Details <i *ngIf="sortColumn === 'bankCode'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i></th>
+                    <th (click)="sortTable('vchrNarration', 'voucher')" style="cursor:pointer;"> Voucher Narration <i *ngIf="sortColumn === 'vchrNarration'" class="fa" [ngClass]="{'fa-sort-up': sortDirection==='asc', 'fa-sort-down': sortDirection==='desc'}"></i></th>
                 </tr>
             </thead>
             <tbody>
@@ -450,7 +442,7 @@
                                     <td>{{inv.voucherNo}}</td>
                                     <td>{{inv.billNo}}</td>
                                     <td>{{inv.billDate | date:'dd/MM/yyyy'}}</td>
-                                    <td class="text-end">{{ inv.billBalance | number:'1.2-2' }}</td>
+                                    <td class="text-end"><button type="button" class="btn btn-link p-0 text-decoration-none" (click)="copyBillBalanceToAccepted(inv)" title="Copy Bill Balance to Accepted"> {{ inv.billBalance | number:'1.2-2' }} </button></td>                                    
                                     <td class="text-end" style="width:140px">
                                         <input type="text" class="form-control form-control-sm" [value]="inv.acceptedAmount==null ? '' : inv.acceptedAmount" (input)="onInvoiceInputChange($event, inv)" (blur)="onInvoiceAcceptedBlur(inv)" />
                                     </td>

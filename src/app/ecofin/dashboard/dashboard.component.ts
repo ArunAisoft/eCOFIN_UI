@@ -1,168 +1,143 @@
-import {
-  Component, OnInit, OnDestroy, AfterViewInit,
-  ViewChild, ElementRef, ChangeDetectorRef
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { Chart, registerables } from 'chart.js';
-import { AlertService }      from 'src/app/shared/utils/alert.service';
+import { AlertService } from 'src/app/shared/utils/alert.service';
 import { normalizeResponse } from 'src/app/shared/utils/normalize-response.service';
-import { DashboardService }  from 'src/app/shared/services/voucher/dashboard.service';
-import {
-  DashboardSummaryDto, DashboardKpiDto,
-  VoucherTypeMetricDto, VoucherTypeDrillDto,
-  BankSummaryDto, RecentVoucherDto, MonthlyTrendDto,
-  VoucherTypeConfig
-} from 'src/app/shared/models/dashboard.models';
+import { DashboardService } from 'src/app/shared/services/voucher/dashboard.service';
+import { DashboardSummaryDto, DashboardKpiDto, VoucherTypeMetricDto, VoucherTypeDrillDto, BankSummaryDto, RecentVoucherDto, MonthlyTrendDto, VoucherTypeConfig } from 'src/app/shared/models/dashboard.models';
+import { FinancialYearsWithPeriodsModel } from 'src/app/shared/models/common.models';
+import { CommonService } from 'src/app/shared/services/voucher/common.service';
 
 Chart.register(...registerables);
 
 @Component({
-  selector:    'app-dashboard',
+  selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
-  styleUrls:   ['./dashboard.component.css']
+  styleUrls: ['./dashboard.component.css']
 })
 export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
-  // ── Canvas refs ────────────────────────────────────────────────────────
-  @ViewChild('barChartRef')   barChartRef!:   ElementRef<HTMLCanvasElement>;
+  @ViewChild('barChartRef') barChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('donutChartRef') donutChartRef!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('lineChartRef')  lineChartRef!:  ElementRef<HTMLCanvasElement>;
+  @ViewChild('lineChartRef') lineChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('stackChartRef') stackChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('drillChartRef') drillChartRef!: ElementRef<HTMLCanvasElement>;
 
-  // ── State ──────────────────────────────────────────────────────────────
-  userName:       string  = '';
-  isLoading:      boolean = false;
+  userName: string = '';
+  isLoading: boolean = false;
   isDrillLoading: boolean = false;
 
-  // ── Data ───────────────────────────────────────────────────────────────
-  summary:          DashboardSummaryDto | null = null;
-  kpi:              DashboardKpiDto     | null = null;
-  voucherMetrics:   VoucherTypeMetricDto[]     = [];
-  bankSummary:      BankSummaryDto[]           = [];
-  monthlyTrend:     MonthlyTrendDto[]          = [];
-  recentVouchers:   RecentVoucherDto[]         = [];
-  drillData:        VoucherTypeDrillDto | null = null;
-  expandedBankCode: string              | null = null;
+  summary: DashboardSummaryDto | null = null;
+  kpi: DashboardKpiDto | null = null;
+  voucherMetrics: VoucherTypeMetricDto[] = [];
+  bankList: BankSummaryDto[] = [];
+  bankSummary: BankSummaryDto[] = [];
+  monthlyTrend: MonthlyTrendDto[] = [];
+  recentVouchers: RecentVoucherDto[] = [];
+  drillData: VoucherTypeDrillDto | null = null;
+  expandedBankCode: string | null = null;
 
-  // ── Filters ────────────────────────────────────────────────────────────
-  filterForm!:         FormGroup;
+  filterForm!: FormGroup;
   selectedVoucherType: VoucherTypeConfig | null = null;
-  selectedStatus:      string = '';
+  selectedStatus: string = '';
 
-  /**
-   * Built from voucherMetrics at runtime, not from the hardcoded
-   * VOUCHER_TYPE_CONFIG. That list held BNKP, CASP, SALE, PURCH, CRDN, OTH -
-   * a mix of voucher GROUP codes and invented ones. The real voucher types on
-   * this database are SAV, SBR, YBI, CPV, DSC, REG, SBB, CRD, SAE, DEB, so no
-   * chip ever matched: clicking one emptied the grid, and drill-down was
-   * unreachable because every find() returned undefined.
-   */
   voucherTypeConfig: VoucherTypeConfig[] = [];
 
-  /** Financial years returned by the API, newest first. */
-  financialYears: string[] = [];
+  years: FinancialYearsWithPeriodsModel[] = [];
+  months: any[] = [];
+
   readonly statusOptions = [
-    { label: 'All statuses', value: ''       },
-    { label: 'Posted',       value: 'Post'   },
-    { label: 'On Hold',      value: 'Hold'   },   // verified: cfn_gldetail has 'Hold', never 'ONHOLD'
+    { label: 'All statuses', value: '' },
+    { label: 'Posted', value: 'Post' },
+    { label: 'On Hold', value: 'Hold' },
   ];
 
-  // ── Chart instances ────────────────────────────────────────────────────
-  private barChart:   Chart | null = null;
+  private barChart: Chart | null = null;
   private donutChart: Chart | null = null;
-  private lineChart:  Chart | null = null;
+  private lineChart: Chart | null = null;
   private stackChart: Chart | null = null;
   private drillChart: Chart | null = null;
 
-  /** Colours follow the live config, so a slice matches its chip. */
-  private get CHART_COLORS(): string[] {
-    return this.voucherTypeConfig.length
-      ? this.voucherTypeConfig.map(v => v.color)
-      : ['#546E7A'];
-  }
-  private readonly GRID_COLOR   = 'rgba(128,128,128,0.1)';
-  private readonly TICK_COLOR   = 'rgba(128,128,128,0.6)';
+  private get CHART_COLORS(): string[] { return this.voucherTypeConfig.length ? this.voucherTypeConfig.map(v => v.color) : ['#546E7A']; }
+  private readonly GRID_COLOR = 'rgba(128,128,128,0.1)';
+  private readonly TICK_COLOR = 'rgba(128,128,128,0.6)';
 
   constructor(
-    private fb:               FormBuilder,
+    private fb: FormBuilder,
     private dashboardService: DashboardService,
-    private alertService:     AlertService,
-    private cdr:              ChangeDetectorRef
-  ) {}
-
-  // ── Lifecycle ──────────────────────────────────────────────────────────
+    private alertService: AlertService,
+    private cdr: ChangeDetectorRef,
+    private commonService: CommonService
+  ) { }
 
   ngOnInit(): void {
     window.scrollTo(0, 0);
-    this.userName   = localStorage.getItem('userName') ?? '';
+    this.userName = localStorage.getItem('userName') ?? '';
     this.filterForm = this.fb.group({ bankCode: [null], finYear: [null], accPeriod: [null] });
-    this.loadSummary();
+    this.loadDropdownData();
   }
 
-  ngAfterViewInit(): void {}
+  ngAfterViewInit(): void { }
 
   ngOnDestroy(): void {
     this.destroyAllCharts();
   }
 
-  // ── Form getters ───────────────────────────────────────────────────────
-
-  get bankCodeControl()  { return this.filterForm.get('bankCode')  as FormControl; }
+  get bankCodeControl() { return this.filterForm.get('bankCode') as FormControl; }
   get accPeriodControl() { return this.filterForm.get('accPeriod') as FormControl; }
-  get finYearControl()   { return this.filterForm.get('finYear')   as FormControl; }
+  get finYearControl() { return this.filterForm.get('finYear') as FormControl; }
 
-  // ── Load summary ───────────────────────────────────────────────────────
+  loadDropdownData(): void {
+    this.commonService.getYearList().subscribe({
+      next: (response) => {
+        this.years = response.data ?? [];
+        if (this.years.length > 0) {
+          const firstYear = this.years[0];
+          this.finYearControl.setValue(firstYear.financialyear, { emitEvent: false });
+          this.months = firstYear.periods || [];
+          this.accPeriodControl.setValue(null, { emitEvent: false });
+          this.loadSummary();
+        }
+      },
+      error: (error) => {
+        console.error('Error loading financial years:', error);
+      }
+    });
+  }
 
   loadSummary(): void {
     const { bankCode, accPeriod, finYear } = this.filterForm.value;
     this.isLoading = true;
     this.destroyAllCharts();
 
-    normalizeResponse<any>(
-      this.dashboardService.getSummary(
-        this.userName, bankCode ?? undefined, accPeriod ?? undefined, finYear ?? undefined
-      ),
-      'Dashboard'
-    )
-    .pipe(finalize(() => (this.isLoading = false)))
-    .subscribe({
-      next: res => {
-        if (res.status === 200) {
-          const data = res.data;
-          if (!data) { this.alertService.warning('No dashboard data found.'); return; }
+    normalizeResponse<any>(this.dashboardService.getSummary(this.userName, bankCode ?? undefined, accPeriod ?? undefined, finYear ?? undefined), 'Dashboard')
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: res => {
+          if (res.status === 200) {
+            const data = res.data;
+            if (!data) { this.alertService.warning('No dashboard data found.'); return; }
+            if (!this.bankList.length) {
+              this.bankList = data.bankSummary ?? [];
+            }
 
-          this.summary        = data;
-          this.kpi            = data.kpi;
-          this.financialYears = data.financialYears ?? [];
-          this.voucherMetrics = data.voucherMetrics ?? [];
-          this.buildVoucherTypeConfig();   // chips/legend follow the data
-          this.bankSummary    = data.bankSummary    ?? [];
-          this.monthlyTrend   = data.monthlyTrend   ?? [];
-          this.recentVouchers = data.recentVouchers ?? [];
+            this.bankSummary = data.bankSummary ?? [];
+            this.summary = data;
+            this.kpi = data.kpi;
+            this.voucherMetrics = data.voucherMetrics ?? [];
+            this.buildVoucherTypeConfig();
+            this.monthlyTrend = data.monthlyTrend ?? [];
+            this.recentVouchers = data.recentVouchers ?? [];
 
-          // ── Auto-select latest period on first load ──────────────────
-          // Picks the entry with highest sequence (latest active period).
-          // { emitEvent: false } prevents triggering valueChanges → no reload loop.
-          if (this.monthlyTrend.length && !this.accPeriodControl.value) {
-            const latest = this.monthlyTrend
-              .reduce((max, m) => m.sequence > max.sequence ? m : max);
-            this.accPeriodControl.setValue(latest.accPeriod, { emitEvent: false });
+            this.cdr.detectChanges();
+            setTimeout(() => this.buildAllCharts(), 0);
+          } else {
+            this.alertService.showCommonError(res.status, res.message, 'Dashboard');
           }
-
-          // Force *ngIf to render <canvas> before Chart.js looks for them
-          this.cdr.detectChanges();
-          setTimeout(() => this.buildAllCharts(), 0);
-          return;
-        }
-        this.alertService.showCommonError(res.status, res.message, 'Dashboard');
-      },
-      error: (err: any) =>
-        this.alertService.showCommonError(
-          err?.status || 0, err?.error?.message || err?.message, 'Dashboard'
-        )
-    });
+        },
+        error: (err: any) => this.alertService.showCommonError(err?.status || 0, err?.error?.message || err?.message, 'Dashboard')
+      });
   }
 
   onFilterChange(): void {
@@ -170,16 +145,6 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     this.selectedVoucherType = null;
     this.loadSummary();
   }
-
-  onResetFilters(): void {
-    this.filterForm.reset();
-    this.selectedVoucherType = null;
-    this.selectedStatus      = '';
-    this.drillData           = null;
-    this.loadSummary();
-  }
-
-  // ── Drill-down ─────────────────────────────────────────────────────────
 
   selectVoucherType(cfg: VoucherTypeConfig): void {
     if (!cfg) return;
@@ -197,34 +162,29 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     this.isDrillLoading = true;
     this.destroyDrillChart();
 
-    normalizeResponse<any>(
-      this.dashboardService.getDrillDown(
-        sysCategory, this.userName, bankCode ?? undefined
-      ),
-      'Drill Down'
-    )
-    .pipe(finalize(() => (this.isDrillLoading = false)))
-    .subscribe({
-      next: res => {
-        if (res.status === 200) {
-          const data = res.data;
-          if (!data) { this.alertService.warning('No drill-down data found.'); return; }
-          this.drillData = data;
-          this.cdr.detectChanges();
-          setTimeout(() => this.buildDrillChart(data.monthlyVolume ?? []), 0);
-          return;
-        }
-        this.alertService.showCommonError(res.status, res.message, 'Drill Down');
-      },
-      error: (err: any) =>
-        this.alertService.showCommonError(
-          err?.status || 0, err?.error?.message || err?.message, 'Drill Down'
-        )
-    });
+    normalizeResponse<any>(this.dashboardService.getDrillDown(sysCategory, this.userName, bankCode ?? undefined), 'Drill Down')
+      .pipe(finalize(() => (this.isDrillLoading = false)))
+      .subscribe({
+        next: res => {
+          if (res.status === 200) {
+            const data = res.data;
+            if (!data) { this.alertService.warning('No drill-down data found.'); return; }
+            this.drillData = data;
+            this.cdr.detectChanges();
+            setTimeout(() => this.buildDrillChart(data.monthlyVolume ?? []), 0);
+            return;
+          }
+          this.alertService.showCommonError(res.status, res.message, 'Drill Down');
+        },
+        error: (err: any) =>
+          this.alertService.showCommonError(
+            err?.status || 0, err?.error?.message || err?.message, 'Drill Down'
+          )
+      });
   }
 
   closeDrillDown(): void {
-    this.drillData           = null;
+    this.drillData = null;
     this.selectedVoucherType = null;
     this.destroyDrillChart();
   }
@@ -232,8 +192,6 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   toggleBankExpand(bankCode: string): void {
     this.expandedBankCode = this.expandedBankCode === bankCode ? null : bankCode;
   }
-
-  // ── Computed ───────────────────────────────────────────────────────────
 
   get filteredRecentVouchers(): RecentVoucherDto[] {
     let rows = this.recentVouchers;
@@ -246,30 +204,13 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onStatusFilterChange(status: string): void { this.selectedStatus = status; }
 
-  /**
-   * Period is more specific than financial year and wins server-side, so a
-   * stale period from another year would make the year selector look broken.
-   * Clear it whenever the year changes.
-   */
+
   onFinYearChange(): void {
+    const fy = this.years.find(y => y.financialyear === this.finYearControl.value);
+    this.months = fy?.periods || [];
     this.accPeriodControl.setValue(null, { emitEvent: false });
     this.loadSummary();
   }
-
-  /** Periods belonging to the selected financial year (April-March). */
-  get periodsForSelectedYear(): MonthlyTrendDto[] {
-    const fy = this.finYearControl?.value as string | null;
-    if (!fy) return this.monthlyTrend;
-
-    const startYear = parseInt(fy.split('-')[0], 10);
-    if (isNaN(startYear)) return this.monthlyTrend;
-
-    const from = startYear * 100 + 4;
-    const to = (startYear + 1) * 100 + 3;
-    return this.monthlyTrend.filter(m => m.sequence >= from && m.sequence <= to);
-  }
-
-  // ── Charts ─────────────────────────────────────────────────────────────
 
   private buildAllCharts(): void {
     this.buildBarChart();
@@ -284,7 +225,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     this.barChart = new Chart(this.barChartRef.nativeElement, {
       type: 'bar',
       data: {
-        labels:   this.voucherMetrics.map(v => v.voucherSysCategory),
+        labels: this.voucherMetrics.map(v => v.voucherSysCategory),
         datasets: [{ label: 'Total vouchers', data: this.voucherMetrics.map(v => v.totalCount), backgroundColor: this.CHART_COLORS, borderRadius: 4 }]
       },
       options: {
@@ -292,7 +233,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         plugins: { legend: { display: false } },
         scales: {
           x: { grid: { color: this.GRID_COLOR }, ticks: { color: this.TICK_COLOR } },
-          y: { grid: { display: false },         ticks: { color: this.TICK_COLOR } }
+          y: { grid: { display: false }, ticks: { color: this.TICK_COLOR } }
         },
         onClick: (_e, els) => {
           if (!els.length) return;
@@ -309,7 +250,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     this.donutChart = new Chart(this.donutChartRef.nativeElement, {
       type: 'doughnut',
       data: {
-        labels:   this.voucherMetrics.map(v => `${v.voucherSysCategory} ₹${this.fmtLakh(v.postedAmount)}L`),
+        labels: this.voucherMetrics.map(v => `${v.voucherSysCategory} ₹${this.fmtLakh(v.postedAmount)}L`),
         datasets: [{ data: this.voucherMetrics.map(v => v.postedAmount), backgroundColor: this.CHART_COLORS, borderWidth: 0, hoverOffset: 6 }]
       },
       options: {
@@ -330,20 +271,17 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private buildLineChart(): void {
     if (!this.lineChartRef?.nativeElement || !this.monthlyTrend.length) return;
     this.lineChart?.destroy();
-    const labels    = this.monthlyTrend.map(m => m.accPeriod);
+    const labels = this.monthlyTrend.map(m => m.accPeriod);
     const groupKeys = [...new Set(this.monthlyTrend.flatMap(m => m.groups.map(g => g.voucherGroup)))].sort();
-    const groupColors: Record<string, string> = {
-      BNK: '#378ADD', CASH: '#D85A30', SALE: '#7F77DD', PURCH: '#D4537E',
-      CONTRA: '#534AB7', JRNL: '#888780', DBNOT: '#E24B4A', CRNOT: '#0F6E56',
-    };
+    const groupColors: Record<string, string> = { BNK: '#378ADD', CASH: '#D85A30', SALE: '#7F77DD', PURCH: '#D4537E', CONTRA: '#534AB7', JRNL: '#888780', DBNOT: '#E24B4A', CRNOT: '#0F6E56', };
     this.lineChart = new Chart(this.lineChartRef.nativeElement, {
       type: 'line',
       data: {
         labels,
         datasets: groupKeys.map((key, i) => ({
-          label:           key,
-          data:            this.monthlyTrend.map(m => m.groups.find(g => g.voucherGroup === key)?.postedAmount ?? 0),
-          borderColor:     groupColors[key] ?? this.CHART_COLORS[i % this.CHART_COLORS.length],
+          label: key,
+          data: this.monthlyTrend.map(m => m.groups.find(g => g.voucherGroup === key)?.postedAmount ?? 0),
+          borderColor: groupColors[key] ?? this.CHART_COLORS[i % this.CHART_COLORS.length],
           backgroundColor: 'transparent',
           tension: 0.4, borderDash: i > 1 ? [5, 3] : [], pointRadius: 3,
         }))
@@ -359,17 +297,6 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  /**
-   * Posted amount rolled up by voucher GROUP.
-   *
-   * This replaces the old Posted / On Hold / Draft stacked bar. That chart was
-   * dead space: Draft never appears in cfn_gldetail at all, and On Hold is
-   * 1,104 rows against 2,772,123 posted - so it rendered as a single green bar
-   * per type, duplicating "Volume by voucher type" right beside it.
-   *
-   * Grouping by VOUCHERGROUP answers a question the per-type charts cannot:
-   * how much money moved through banking vs sales vs journals.
-   */
   private buildStackChart(): void {
     if (!this.stackChartRef?.nativeElement || !this.voucherMetrics.length) return;
     this.stackChart?.destroy();
@@ -443,14 +370,14 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     this.drillChart = new Chart(this.drillChartRef.nativeElement, {
       type: 'bar',
       data: {
-        labels:   monthlyVolume.map(m => m.accPeriod),
+        labels: monthlyVolume.map(m => m.accPeriod),
         datasets: [{ label: 'Volume', data: monthlyVolume.map(m => m.count), backgroundColor: color + 'CC', borderRadius: 3 }]
       },
       options: {
         responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-          x: { grid: { display: false },        ticks: { color: this.TICK_COLOR, font: { size: 10 }, maxRotation: 0 } },
+          x: { grid: { display: false }, ticks: { color: this.TICK_COLOR, font: { size: 10 }, maxRotation: 0 } },
           y: { grid: { color: this.GRID_COLOR }, ticks: { color: this.TICK_COLOR, font: { size: 10 } } }
         }
       }
@@ -467,8 +394,6 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     this.drillChart = null;
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────────
-
   getVoucherConfig(code: string): VoucherTypeConfig | undefined {
     return this.voucherTypeConfig.find(v => v.code === code);
   }
@@ -478,13 +403,11 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     return map[status] ?? status;
   }
 
-  /** Always 2 decimals. min:0 produced '₹3,21,475.6' beside '₹96,40,964'. */
   fmtAmount(val: number | null | undefined): string {
     if (val == null) return '₹0.00';
     return '₹' + val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
-  /** Compact Indian form for KPI tiles: ₹2.99 Cr rather than ₹2,99,35,482.28 */
   fmtAmountShort(val: number | null | undefined): string {
     if (val == null) return '₹0';
     const n = Math.abs(val);
@@ -493,30 +416,26 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     return this.fmtAmount(val);
   }
 
-  /**
-   * Derives the chip / legend list from the metrics the API actually returned.
-   * Colours are assigned per voucher GROUP so related types read alike.
-   */
   private buildVoucherTypeConfig(): void {
     const groupColor: Record<string, [string, string]> = {
-      BNKP:  ['#1565C0', '#E3F2FD'],
-      BNKR:  ['#00838F', '#E0F7FA'],
-      CASP:  ['#EF6C00', '#FFF3E0'],
-      CASR:  ['#F9A825', '#FFFDE7'],
-      SALV:  ['#2E7D32', '#E8F5E9'],
-      DEBT:  ['#C62828', '#FFEBEE'],
-      CRDT:  ['#6A1B9A', '#F3E5F5'],
-      JRNL:  ['#4527A0', '#EDE7F6'],
-      CONT:  ['#00695C', '#E0F2F1'],
-      ADJV:  ['#37474F', '#ECEFF1'],
-      CHQR:  ['#5D4037', '#EFEBE9'],
+      BNKP: ['#1565C0', '#E3F2FD'],
+      BNKR: ['#00838F', '#E0F7FA'],
+      CASP: ['#EF6C00', '#FFF3E0'],
+      CASR: ['#F9A825', '#FFFDE7'],
+      SALV: ['#2E7D32', '#E8F5E9'],
+      DEBT: ['#C62828', '#FFEBEE'],
+      CRDT: ['#6A1B9A', '#F3E5F5'],
+      JRNL: ['#4527A0', '#EDE7F6'],
+      CONT: ['#00695C', '#E0F2F1'],
+      ADJV: ['#37474F', '#ECEFF1'],
+      CHQR: ['#5D4037', '#EFEBE9'],
       PAYBR: ['#455A64', '#ECEFF1'],
       PAYCR: ['#455A64', '#ECEFF1'],
-      MEMO:  ['#616161', '#F5F5F5'],
-      RETM:  ['#616161', '#F5F5F5'],
-      REVC:  ['#616161', '#F5F5F5'],
-      RJV:   ['#616161', '#F5F5F5'],
-      TRVL:  ['#616161', '#F5F5F5'],
+      MEMO: ['#616161', '#F5F5F5'],
+      RETM: ['#616161', '#F5F5F5'],
+      REVC: ['#616161', '#F5F5F5'],
+      RJV: ['#616161', '#F5F5F5'],
+      TRVL: ['#616161', '#F5F5F5'],
     };
     const fallback: [string, string] = ['#546E7A', '#ECEFF1'];
 
@@ -544,6 +463,6 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   trackByCode(_: number, item: VoucherTypeMetricDto): string { return item.voucherSysCategory; }
   trackByCfgCode(_: number, item: VoucherTypeConfig): string { return item.code; }
-  trackByBank(_: number, item: BankSummaryDto): string       { return item.bankCode; }
-  trackByVchr(_: number, item: RecentVoucherDto): string     { return item.voucherNo; }
+  trackByBank(_: number, item: BankSummaryDto): string { return item.bankCode; }
+  trackByVchr(_: number, item: RecentVoucherDto): string { return item.voucherNo; }
 }

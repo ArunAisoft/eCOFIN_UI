@@ -280,17 +280,8 @@ export class SaleVoucherComponent implements OnInit, OnDestroy {
   }
 
   onMonthChange(): void {
-    const hadVoucherList = this.voucherList.length > 0;
-    if (this.onHoldNo || this.voucherNo) {
-      this.resetAllVoucherFields();
-    }
-    this.onImportTypeChange();
-    this.voucherList = [];
-    // const newVoucherDate = this.getVoucherDateFromPeriod();
-    // this.voucherBlock.get('voucherDate')?.setValue(newVoucherDate);
-    if (hadVoucherList) {
-      this.onView();
-    }
+    if (this.onHoldNo || this.voucherNo) this.resetAllVoucherFields();
+    if (this.header.get('month')?.value) this.onView();
   }
 
   private getVoucherDateFromPeriod(): string {
@@ -566,6 +557,7 @@ export class SaleVoucherComponent implements OnInit, OnDestroy {
   }
 
   resetAllVoucherFields(): void {
+    this.selectVouchersAll = false; 
     this.resetMainBlock();
     this.resetBankBlock();
     this.resetVoucherBlock();
@@ -706,6 +698,12 @@ export class SaleVoucherComponent implements OnInit, OnDestroy {
 
   onView(): void {
     window.scrollTo(0, 0);
+    this.voucherList = [];
+    this.searchText = '';
+    this.selectVouchersAll = false;
+    this.voucherList.forEach(x => x.selected = false);
+    this.filteredVouchersList.forEach(x => x.selected = false);
+
     if (this.header.invalid) { this.header.markAllAsTouched(); return; }
     const accPeriod = (this.header.get('month')?.value ?? '').toString().trim();
     this.isLoading = true;
@@ -720,7 +718,7 @@ export class SaleVoucherComponent implements OnInit, OnDestroy {
             const list = (res.data ?? []) as SaleSummaryModel[];
             if (!list.length) { this.voucherList = []; this.alertService.info('No Sales found for the selected Financial Year & Month.'); return; }
             this.voucherList = list;
-            this.sortTable('vchrNumber', 'voucher', true);
+            this.sortTable('ctrlOnHoldNo', 'voucher', true);
             return;
           }
           this.voucherList = [];
@@ -899,10 +897,15 @@ export class SaleVoucherComponent implements OnInit, OnDestroy {
     const voucherDate = this.form.get('voucherBlock.voucherDate')?.value;
     const accPeriod = this.form.get('header.month')?.value;
     if (!voucherDate || !accPeriod) return true;
+
     const period = this.months.find(p => p.accperiod === accPeriod);
     if (!period) return true;
-    const vd = new Date(voucherDate);
-    return vd >= new Date(period.periodfrom) && vd <= new Date(period.periodto);
+
+    const stripTime = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const vd = stripTime(new Date(voucherDate));
+    const from = stripTime(new Date(period.periodfrom));
+    const to = stripTime(new Date(period.periodto));
+    return vd >= from && vd <= to;
   }
 
   private buildDetails(v: any): any[] | null {
@@ -1010,6 +1013,9 @@ export class SaleVoucherComponent implements OnInit, OnDestroy {
         next: (res: ApiResponse<any>) => {
           if (res?.status === 200 || res?.status === 201) {
             this.voucherNo = res.data as string;
+            this.selectVouchersAll = false;
+            this.voucherList.forEach(x => x.selected = false);
+            this.filteredVouchersList.forEach(x => x.selected = false);
             this.loadVoucherDetails(this.onHoldNo ?? '');
             if (this.voucherList.length > 0) this.onView();
             this.alertService.success(res.message || 'Voucher Posted successfully.');
@@ -1122,9 +1128,9 @@ export class SaleVoucherComponent implements OnInit, OnDestroy {
   onVCheckAll(event: Event, list: any[]): void {
     const checked = (event.target as HTMLInputElement).checked;
     const selectable = list.filter(x => !x.vchrNumber);
-    if (checked && selectable.length > this.maxSelection) { 
-      this.alertService.warning(`You can select maximum ${this.maxSelection} records at a time.`); 
-      selectable.forEach((x, i) => x.selected = i < this.maxSelection); return; 
+    if (checked && selectable.length > this.maxSelection) {
+      this.alertService.warning(`You can select maximum ${this.maxSelection} records at a time.`);
+      selectable.forEach((x, i) => x.selected = i < this.maxSelection); return;
     }
     selectable.forEach(x => x.selected = checked);
   }
@@ -1147,7 +1153,7 @@ export class SaleVoucherComponent implements OnInit, OnDestroy {
     if (!selected.length) { this.alertService.info('Select at least one Domestic details to import'); return; }
     if (selected.length > this.maxSelection) { this.alertService.warning(`Maximum ${this.maxSelection} records allowed.`); return; }
     this.isLoading = true;
-    const payload = { invoiceNumbers: selected.map(x => x.invoiceNo), voucherType: v.voucherBlock.voucherType, accountingPeriod: v?.header?.month ?? '', username: this.userName, locationCode: v?.header?.locationCode ?? 'BILZ', voucherDate: formatDate(new Date(), 'yyyy-MM-dd', 'en')};
+    const payload = { invoiceNumbers: selected.map(x => x.invoiceNo), voucherType: v.voucherBlock.voucherType, accountingPeriod: v?.header?.month ?? '', username: this.userName, locationCode: v?.header?.locationCode ?? 'BILZ', voucherDate: formatDate(new Date(), 'yyyy-MM-dd', 'en') };
     this.dataService.OnHoldDomesticSales(payload).pipe(finalize(() => this.isLoading = false)).subscribe({
       next: () => {
         this.clearImportLists();
@@ -1170,7 +1176,7 @@ export class SaleVoucherComponent implements OnInit, OnDestroy {
     if (!selected.length) { this.alertService.info('Select at least one Export details to import'); return; }
     if (selected.length > this.maxSelection) { this.alertService.warning(`Maximum ${this.maxSelection} records allowed.`); return; }
     this.isLoading = true;
-    const payload = { invoiceNumbers: selected.map(x => x.invoiceNo), voucherType: v.voucherBlock.voucherType, accountingPeriod: v?.header?.month ?? '', username: this.userName, locationCode: v?.header?.locationCode ?? 'BILZ', voucherDate: formatDate(new Date(), 'yyyy-MM-dd', 'en')};
+    const payload = { invoiceNumbers: selected.map(x => x.invoiceNo), voucherType: v.voucherBlock.voucherType, accountingPeriod: v?.header?.month ?? '', username: this.userName, locationCode: v?.header?.locationCode ?? 'BILZ', voucherDate: formatDate(new Date(), 'yyyy-MM-dd', 'en') };
     this.dataService.OnHoldExportSales(payload).pipe(finalize(() => this.isLoading = false)).subscribe({
       next: () => {
         this.clearImportLists();
@@ -1253,6 +1259,11 @@ export class SaleVoucherComponent implements OnInit, OnDestroy {
     );
   }
 
+  copyBillBalanceToAccepted(inv: any): void {
+    inv.acceptedAmount = inv.billBalance;
+    this.onInvoiceAcceptedBlur(inv);
+  }
+
   onBulkPost(): void {
     const selectedRows = this.filteredVouchersList.filter((x: any) => x.selected && !x.vchrNumber);
     if (!selectedRows.length) { this.alertService.warning('Please select at least one OnHold Voucher.'); return; }
@@ -1266,8 +1277,13 @@ export class SaleVoucherComponent implements OnInit, OnDestroy {
     this.dataService.postMultipleSaleBills(payload).subscribe({
       next: (res: any) => {
         this.isLoading = false;
-        if (res?.success) { this.onView(); this.alertService.success(res.message || 'Bulk posting completed successfully.'); this.filteredVouchersList.forEach((x: any) => { x.selected = false; }); }
-        else { this.alertService.warning(res.message || 'Bulk posting failed.'); }
+        if (res?.success) {
+          this.onView();
+          this.alertService.success(res.message || 'Bulk posting completed successfully.');
+          this.selectVouchersAll = false;
+          this.voucherList.forEach(x => x.selected = false);
+          this.filteredVouchersList.forEach((x: any) => x.selected = false);
+        } else this.alertService.warning(res.message || 'Bulk posting failed.');
       },
       error: (err: any) => { this.isLoading = false; this.alertService.error(err?.error?.message || 'Error while posting vouchers.'); }
     });
